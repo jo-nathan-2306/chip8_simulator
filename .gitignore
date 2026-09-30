@@ -1,0 +1,9 @@
+*.o
+*.d
+*.obj
+*.exe
+a.out
+chip8
+*.sav
+*.ch8
+imgui.ini

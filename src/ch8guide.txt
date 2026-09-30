@@ -1,0 +1,137 @@
+#### key differences between chip-8 & schip               
+                                                            
+   feature  │ standard chi… │ super-c… │ schip as… │ opcode
+  ───────────┼───────────────┼───────────┼─────────┼────────
+   resolutio │ 64 × 32       │ 128 × 64  │ high /  │ 00ff /
+   ion     │ pixels        │                 │ /    │ /
+           │               │                 │ low  │ 00fe
+   sizes    │ pixels       │ pixels    │ vy, 0    │
+            │              │ (32       │          │
+           │              │                 │ vy, 0 │
+   high-   │ 5-byte (4x5) │ 10-byte (8x10)  │ ld    │ fx30
+   res     │ font         │ font            │ hf,   │
+   font    │              │                 │ vx    │
+   scroll  │ not          │ scroll down n   │ scd n │ 00cn
+   down    │ available    │ lines (0 ≤ n ≤  │       │
+           │              │ 15)             │       │
+   scroll  │ not          │ scroll 4 pixels │ scr   │ 00fb
+   right   │ available    │ right           │       │
+   scroll  │ not          │ scroll 4 pixels │ scl   │ 00fc
+   left    │ available    │ left            │       │
+   rpl     │ not          │ save/load       │ ld r, │ fx75
+   user    │ available    │ registers       │ vx /  │ /
+   flags   │              │ v0..vx to       │ ld    │ fx85
+           │              │ r0..rx          │ vx, r │
+   exit /  │ loop forever │ halt emulator   │ exit  │ 00fd
+   halt    │              │ execution       │       │
+  ──────                                                    
+  ### step 1: open the built-in code editor & assembler     
+                                                            
+  press ctrl+e (or go to tools → chip-8 code editor &       
+  assembler).                                               
+                                                            
+  the editor includes syntax highlighting, an assembler, and
+  preset templates.                                         
+  ──────                                                    
+  ### step 2: write your schip program                      
+                                                            
+  here is a complete, working schip program demonstrating   
+  128x64 high-res mode, 16x16 large sprites, and hardware   
+  scrolling:                                                
+                                                            
+    ;                                                       
+  ==========================================================
+    ; my first super-chip program                           
+    ;                                                       
+  ==========================================================
+    start:                                                  
+        high                ; 1. switch display to 128x64   
+  high-resolution mode                                      
+        cls                 ; clear the 128x64 screen       
+                                                            
+        ; setup initial coordinates                         
+        ld v0, 56           ; x coordinate (center of 128   
+  width)                                                    
+        ld v1, 24           ; y coordinate (center of 64    
+  height)                                                   
+        ld i, sprite_star   ; point index register i to our 
+  16x16 sprite                                              
+                                                            
+    main_loop:                                              
+        ; draw 16x16 sprite at (v0, v1). height '0' in schip
+  means 16x16!                                              
+        drw v0, v1, 0                                       
+                                                            
+        ; wait for vertical blank / delay timer             
+        ld v2, 4                                            
+        ld dt, v2                                           
+    wait_frame:                                             
+        ld v2, dt                                           
+        se v2, 0                                            
+        jp wait_frame                                       
+                                                            
+        ; erase old sprite by drawing it again (xor)        
+        drw v0, v1, 0                                       
+                                                            
+        ; check keypad input: key 2 (up), key 8 (down), key 
+  4 (left), key 6 (right)                                   
+        ld v3, 4            ; check left key (4)            
+        sknp v3                                             
+        add v0, 254         ; move left (x -= 2)            
+                                                            
+        ld v3, 6            ; check right key (6)           
+        sknp v3                                             
+        add v0, 2           ; move right (x += 2)           
+                                                            
+        ld v3, 2            ; check up key (2)              
+        sknp v3                                             
+        add v1, 254         ; move up (y -= 2)              
+                                                            
+        ld v3, 8            ; check down key (8)            
+        sknp v3                                             
+        add v1, 2           ; move down (y += 2)            
+                                                            
+        ; check space/key 5 to trigger hardware downward    
+  screen scroll                                             
+        ld v3, 5                                            
+        sknp v3                                             
+        scd 2               ; hardware scroll screen down by
+  2 lines!                                                  
+                                                            
+        jp main_loop                                        
+                                                            
+    ; ----------------------------------------------------------
+    ; 16x16 large sprite data (16 rows x 2 bytes per row =  
+  32 bytes)                                                 
+    ; ----------------------------------------------------------
+    sprite_star:                                            
+        db 0x01, 0x80       ; ..####........####..          
+        db 0x03, 0xc0       ; ..######....######..          
+        db 0x07, 0xe0       ; ..########..########..        
+        db 0x0f, 0xf0       ; ..##################..        
+        db 0x1f, 0xf8       ; ..####################        
+        db 0x3f, 0xfc       ; ######################        
+        db 0x7f, 0xfe       ; ######################        
+        db 0xff, 0xff       ; ######################        
+        db 0xff, 0xff       ; ######################        
+        db 0x7f, 0xfe       ; ######################        
+        db 0x3f, 0xfc       ; ######################        
+        db 0x1f, 0xf8       ; ..####################        
+        db 0x0f, 0xf0       ; ..##################..        
+        db 0x07, 0xe0       ; ..########..########..        
+        db 0x03, 0xc0       ; ..######....######..          
+        db 0x01, 0x80       ; ..####........####..          
+  ──────                                                    
+  ### step 3: assemble & test instantly                     
+                                                            
+  • in the code editor window, click "assemble & run in vm".
+  • the emulator will immediately switch into super-chip    
+  mode (the window title will display [schip 128x64]) and   
+  run your code.                                            
+  ──────                                                    
+  ### step 4: export to .ch8 binary rom                     
+                                                            
+  • click "save binary (.ch8)" in the editor.               
+  • enter a filename (e.g., roms/my_schip_game.ch8).        
+  • you can now run your game anytime from terminal:        
+    ./chip8 roms/my_schip_game.ch8 
