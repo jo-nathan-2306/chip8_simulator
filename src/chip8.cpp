@@ -161,7 +161,7 @@ bool Chip8::load_rom(const std::string& filename){
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
     if(!file.is_open()){
-        std::cerr << "failed to open rom: " << filename << std::endl;
+        std::cerr << "Failed to open ROM: " << filename << std::endl;
         return false;
     }
 
@@ -169,7 +169,7 @@ bool Chip8::load_rom(const std::string& filename){
     file.seekg(0, std::ios::beg);
 
     if(size > (std::streamsize)(sizeof(memory) - 512)){ 
-        std::cerr << "rom too large to fit in memory (" << size << " bytes)" << std::endl;
+        std::cerr << "ROM too large to fit in memory (" << size << " bytes)" << std::endl;
         return false;
     }
 
@@ -180,20 +180,20 @@ bool Chip8::load_rom(const std::string& filename){
     rom_size = static_cast<size_t>(size);
     rom_path = filename;
 
-    std::cout << "loaded rom: " << filename << " (" << size << " bytes)" << std::endl;
+    std::cout << "Loaded ROM: " << filename << " (" << size << " bytes)" << std::endl;
     return true;
 }
 
 bool Chip8::load_from_bytes(const uint8_t* data, size_t size, const std::string& name){
     if (!data || size == 0 || size > (sizeof(memory) - 512)) {
-        std::cerr << "invalid buffer or size to load (" << size << " bytes)" << std::endl;
+        std::cerr << "Invalid buffer or size to load (" << size << " bytes)" << std::endl;
         return false;
     }
     initialise();
     std::memcpy(memory + 512, data, size);
     rom_size = size;
     rom_path = name;
-    std::cout << "loaded rom from memory buffer: " << name << " (" << size << " bytes)" << std::endl;
+    std::cout << "Loaded ROM from memory buffer: " << name << " (" << size << " bytes)" << std::endl;
     return true;
 }
 
@@ -240,7 +240,7 @@ void Chip8::emulate_cycle(){
                     break;
                 case 0x00FD: 
                     halted = true;
-                    std::cout << "[schip] opcode 00fd: program halted / exit" << std::endl;
+                    std::cout << "[SCHIP] Opcode 00FD: Program halted / exit" << std::endl;
                     pc += 2;
                     break;
                 case 0x00FE: 
@@ -256,7 +256,7 @@ void Chip8::emulate_cycle(){
                     pc += 2;
                     break;
                 default:
-                    std::cerr << "unknown opcode: 0x" << std::hex << opcode << std::dec << std::endl;
+                    std::cerr << "Unknown opcode: 0x" << std::hex << opcode << std::dec << std::endl;
                     pc += 2;
             }
             break;
@@ -573,7 +573,7 @@ void Chip8::update_timers(){
 bool Chip8::save_state(const std::string& filename) const {
     std::ofstream out(filename, std::ios::binary | std::ios::trunc);
     if (!out.is_open()) {
-        std::cerr << "[savestate] failed to open file for writing: " << filename << std::endl;
+        std::cerr << "[savestate] Failed to open file for writing: " << filename << std::endl;
         return false;
     }
 
@@ -617,32 +617,32 @@ bool Chip8::save_state(const std::string& filename) const {
     out.write(reinterpret_cast<const char*>(memory), sizeof(memory));
 
     if (!out.good()) {
-        std::cerr << "[savestate] error writing state to file: " << filename << std::endl;
+        std::cerr << "[savestate] Error writing state to file: " << filename << std::endl;
         return false;
     }
     out.close();
-    std::cout << "[savestate] saved state to: " << filename << " (v2)" << std::endl;
+    std::cout << "[savestate] Saved state to: " << filename << " (v2)" << std::endl;
     return true;
 }
 
 bool Chip8::load_state(const std::string& filename) {
     std::ifstream in(filename, std::ios::binary);
     if (!in.is_open()) {
-        std::cerr << "[savestate] failed to open file for reading: " << filename << std::endl;
+        std::cerr << "[savestate] Failed to open file for reading: " << filename << std::endl;
         return false;
     }
 
     char magic[4];
     in.read(magic, 4);
     if (!in.good() || std::memcmp(magic, "c8st", 4) != 0) {
-        std::cerr << "[savestate] invalid savestate header in: " << filename << std::endl;
+        std::cerr << "[savestate] Invalid savestate header in: " << filename << std::endl;
         return false;
     }
 
     uint32_t version = 0;
     in.read(reinterpret_cast<char*>(&version), sizeof(version));
     if (version != 1 && version != 2) {
-        std::cerr << "[savestate] unsupported savestate version (" << version << ") in: " << filename << std::endl;
+        std::cerr << "[savestate] Unsupported savestate version (" << version << ") in: " << filename << std::endl;
         return false;
     }
 
@@ -686,7 +686,7 @@ bool Chip8::load_state(const std::string& filename) {
     }
 
     if (!in.good()) {
-        std::cerr << "[savestate] corrupted or incomplete savestate file: " << filename << std::endl;
+        std::cerr << "[savestate] Corrupted or incomplete savestate file: " << filename << std::endl;
         return false;
     }
     in.close();
@@ -710,7 +710,7 @@ bool Chip8::load_state(const std::string& filename) {
     std::memcpy(display, new_display, sizeof(display));
     std::memcpy(memory, new_memory, sizeof(memory));
 
-    std::cout << "[savestate] loaded state from: " << filename << " (pc: 0x" << std::hex << pc << std::dec 
-              << ", mode: " << (extended_mode ? "128x64 schip" : "64x32 chip-8") << ")" << std::endl;
+    std::cout << "[savestate] Loaded state from: " << filename << " (pc: 0x" << std::hex << pc << std::dec 
+              << ", mode: " << (extended_mode ? "128x64 SCHIP" : "64x32 CHIP-8") << ")" << std::endl;
     return true;
 }

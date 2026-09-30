@@ -114,18 +114,16 @@ inline void draw_pause_indicator(SDL_Renderer* renderer, int x, int y) {
     SDL_RenderFillRect(renderer, &bar2);
 
     
-    draw_string(renderer, "paused", x + 25, y + 7, {255, 215, 60, 255}, 1);
+    draw_string(renderer, "PAUSED", x + 25, y + 7, {255, 215, 60, 255}, 1);
 }
 
 inline void draw_help_modal(SDL_Renderer* renderer, int win_w, int win_h) {
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    
     SDL_Rect backdrop = {0, 0, win_w, win_h};
     SDL_SetRenderDrawColor(renderer, 5, 8, 15, 215);
     SDL_RenderFillRect(renderer, &backdrop);
 
-    
     int modal_w = 580;
     int modal_h = 326;
     int modal_x = (win_w - modal_w) / 2;
@@ -135,19 +133,17 @@ inline void draw_help_modal(SDL_Renderer* renderer, int win_w, int win_h) {
     SDL_SetRenderDrawColor(renderer, 20, 24, 34, 250);
     SDL_RenderFillRect(renderer, &modal_rect);
 
-    
     SDL_SetRenderDrawColor(renderer, 0, 230, 210, 255);
     SDL_RenderDrawRect(renderer, &modal_rect);
 
-    
     SDL_Rect header_rect = {modal_x, modal_y, modal_w, 24};
     SDL_SetRenderDrawColor(renderer, 30, 40, 58, 255);
     SDL_RenderFillRect(renderer, &header_rect);
     SDL_SetRenderDrawColor(renderer, 0, 230, 210, 255);
     SDL_RenderDrawLine(renderer, modal_x, modal_y + 24, modal_x + modal_w, modal_y + 24);
 
-    draw_string(renderer, "chip-8 emulator  |  controls & features", modal_x + 12, modal_y + 8, {0, 255, 220, 255}, 1);
-    draw_string(renderer, "[x] / esc to close", modal_x + modal_w - 120, modal_y + 8, {180, 200, 220, 255}, 1);
+    draw_string(renderer, "CHIP-8 Emulator  |  Controls & Features", modal_x + 12, modal_y + 8, {0, 255, 220, 255}, 1);
+    draw_string(renderer, "[X] / ESC to close", modal_x + modal_w - 120, modal_y + 8, {180, 200, 220, 255}, 1);
 
     int cur_y = modal_y + 32;
 
@@ -162,36 +158,36 @@ inline void draw_help_modal(SDL_Renderer* renderer, int win_w, int win_h) {
         cur_y += 11;
     };
 
-    print_section("-- emulation speed --");
-    print_item("[+] / [up] / [ ] ]", "increase speed (+60 hz / +1 cycle per frame)");
-    print_item("[-] / [down] / [ [ ]", "decrease speed (-60 hz / -1 cycle per frame)");
-    print_item("[pageup] / [pagedown]", "fast speed change (+/- 300 hz / +/- 5 cycles)");
-    print_item("[0] / [backspace]", "reset speed to standard 600 hz (10 cycles/frame)");
-    print_item("[space] / [p]", "toggle pause / resume");
-    print_item("[.] / [n]", "step single frame (when paused)");
+    print_section("-- Emulation Speed --");
+    print_item("[+] / [UP] / [ ] ]", "Increase speed (+60 Hz / +1 cycle per frame)");
+    print_item("[-] / [DOWN] / [ [ ]", "Decrease speed (-60 Hz / -1 cycle per frame)");
+    print_item("[PageUp] / [PageDown]", "Fast speed change (+/- 300 Hz / +/- 5 cycles)");
+    print_item("[0] / [Backspace]", "Reset speed to standard 600 Hz (10 cycles/frame)");
+    print_item("[Space] / [P]", "Toggle Pause / Resume");
+    print_item("[.] / [N]", "Step single frame (when paused)");
     cur_y += 3;
 
-    print_section("-- color schemes --");
-    print_item("[tab] / [t]", "next retro palette (green crt, amber, neon, etc.)");
-    print_item("[shift + tab]", "previous retro palette");
+    print_section("-- Color Schemes --");
+    print_item("[Tab] / [T]", "Next retro palette (Green CRT, Amber, Neon, etc.)");
+    print_item("[Shift + Tab]", "Previous retro palette");
     cur_y += 3;
 
-    print_section("-- savestate management --");
-    print_item("[f5] / [ctrl + s]", "save emulator state to current slot file");
-    print_item("[f6] / [f8] / [ctrl+l]", "load emulator state from current slot file");
-    print_item("[f7]", "cycle savestate slot (slots 1 to 5)");
+    print_section("-- Savestate Management --");
+    print_item("[F5] / [Ctrl + S]", "Save emulator state to current slot file");
+    print_item("[F6] / [F8] / [Ctrl+L]", "Load emulator state from current slot file");
+    print_item("[F7]", "Cycle savestate slot (slots 1 to 5)");
     cur_y += 3;
 
-    print_section("-- chip-8 keypad mapping --");
-    draw_string(renderer, "chip-8 keypad:  1 2 3 c   4 5 6 d   7 8 9 e   a 0 b f", modal_x + 22, cur_y, {160, 180, 200, 255}, 1);
+    print_section("-- CHIP-8 Keypad Mapping --");
+    draw_string(renderer, "CHIP-8 Keypad:  1 2 3 C   4 5 6 D   7 8 9 E   A 0 B F", modal_x + 22, cur_y, {160, 180, 200, 255}, 1);
     cur_y += 11;
-    draw_string(renderer, "pc keyboard:    1 2 3 4   q w e r   a s d f   z x c v", modal_x + 22, cur_y, {100, 230, 160, 255}, 1);
+    draw_string(renderer, "PC Keyboard:    1 2 3 4   Q W E R   A S D F   Z X C V", modal_x + 22, cur_y, {100, 230, 160, 255}, 1);
     cur_y += 14;
 
     SDL_SetRenderDrawColor(renderer, 50, 60, 80, 200);
     SDL_RenderDrawLine(renderer, modal_x + 10, cur_y, modal_x + modal_w - 10, cur_y);
     cur_y += 6;
-    draw_string(renderer, "* all buttons on the bottom toolbar are mouse-clickable!", modal_x + 22, cur_y, {200, 210, 225, 240}, 1);
+    draw_string(renderer, "* All buttons on the bottom toolbar are mouse-clickable!", modal_x + 22, cur_y, {200, 210, 225, 240}, 1);
 }
 
 #endif 

@@ -42,382 +42,388 @@ inline DisasmResult disassemble_instruction(uint16_t address, uint16_t opcode, b
     switch (nibble0) {
         case 0x0:
             if ((opcode & 0xFFF0) == 0x00C0) {
-                
-                res.mnemonic = "scd";
+                res.mnemonic = "SCD";
                 std::snprintf(buf, sizeof(buf), "%u", n);
                 res.operands = buf;
-                std::snprintf(buf, sizeof(buf), "scroll display down %u lines", n);
+                std::snprintf(buf, sizeof(buf), "Scroll display down %u lines", n);
+                res.description = buf;
+                res.is_schip = true;
+            } else if ((opcode & 0xFFF0) == 0x00D0) {
+                res.mnemonic = "SCU";
+                std::snprintf(buf, sizeof(buf), "%u", n);
+                res.operands = buf;
+                std::snprintf(buf, sizeof(buf), "Scroll display up %u lines", n);
                 res.description = buf;
                 res.is_schip = true;
             } else {
                 switch (opcode & 0x00FF) {
                     case 0xE0:
-                        res.mnemonic = "cls";
+                        res.mnemonic = "CLS";
                         res.operands = "";
-                        res.description = "clear screen display";
+                        res.description = "Clear screen display";
                         break;
                     case 0xEE:
-                        res.mnemonic = "ret";
+                        res.mnemonic = "RET";
                         res.operands = "";
-                        res.description = "return from subroutine";
+                        res.description = "Return from subroutine";
                         break;
                     case 0xFB:
-                        res.mnemonic = "scr";
+                        res.mnemonic = "SCR";
                         res.operands = "";
-                        res.description = "scroll display right 4 pixels";
+                        res.description = "Scroll display right 4 pixels";
                         res.is_schip = true;
                         break;
                     case 0xFC:
-                        res.mnemonic = "scl";
+                        res.mnemonic = "SCL";
                         res.operands = "";
-                        res.description = "scroll display left 4 pixels";
+                        res.description = "Scroll display left 4 pixels";
                         res.is_schip = true;
                         break;
                     case 0xFD:
-                        res.mnemonic = "exit";
+                        res.mnemonic = "EXIT";
                         res.operands = "";
-                        res.description = "halt / exit interpreter";
+                        res.description = "Halt / exit interpreter";
                         res.is_schip = true;
                         break;
                     case 0xFE:
-                        res.mnemonic = "low";
+                        res.mnemonic = "LOW";
                         res.operands = "";
-                        res.description = "disable extended mode (set 64x32)";
+                        res.description = "Disable extended mode (set 64x32)";
                         res.is_schip = true;
                         break;
                     case 0xFF:
-                        res.mnemonic = "high";
+                        res.mnemonic = "HIGH";
                         res.operands = "";
-                        res.description = "enable extended mode (set 128x64)";
+                        res.description = "Enable extended mode (set 128x64)";
                         res.is_schip = true;
                         break;
                     default:
-                        res.mnemonic = "sys";
-                        std::snprintf(buf, sizeof(buf), "0x%03x", nnn);
+                        res.mnemonic = "SYS";
+                        std::snprintf(buf, sizeof(buf), "0x%03X", nnn);
                         res.operands = buf;
-                        res.description = "call machine routine at " + res.operands;
+                        res.description = "Call machine routine at " + res.operands;
                         break;
                 }
             }
             break;
 
         case 0x1:
-            res.mnemonic = "jp";
-            std::snprintf(buf, sizeof(buf), "0x%03x", nnn);
+            res.mnemonic = "JP";
+            std::snprintf(buf, sizeof(buf), "0x%03X", nnn);
             res.operands = buf;
-            res.description = "jump to address " + res.operands;
+            res.description = "Jump to address " + res.operands;
             res.is_jump_or_call = true;
             res.target_addr = nnn;
             break;
 
         case 0x2:
-            res.mnemonic = "call";
-            std::snprintf(buf, sizeof(buf), "0x%03x", nnn);
+            res.mnemonic = "CALL";
+            std::snprintf(buf, sizeof(buf), "0x%03X", nnn);
             res.operands = buf;
-            res.description = "call subroutine at " + res.operands;
+            res.description = "Call subroutine at " + res.operands;
             res.is_jump_or_call = true;
             res.target_addr = nnn;
             break;
 
         case 0x3:
-            res.mnemonic = "se";
-            std::snprintf(buf, sizeof(buf), "v%x, 0x%02x", x, kk);
+            res.mnemonic = "SE";
+            std::snprintf(buf, sizeof(buf), "V%X, 0x%02X", x, kk);
             res.operands = buf;
-            std::snprintf(buf, sizeof(buf), "skip next if v%x == 0x%02x (%u)", x, kk, kk);
+            std::snprintf(buf, sizeof(buf), "Skip next if V%X == 0x%02X (%u)", x, kk, kk);
             res.description = buf;
             break;
 
         case 0x4:
-            res.mnemonic = "sne";
-            std::snprintf(buf, sizeof(buf), "v%x, 0x%02x", x, kk);
+            res.mnemonic = "SNE";
+            std::snprintf(buf, sizeof(buf), "V%X, 0x%02X", x, kk);
             res.operands = buf;
-            std::snprintf(buf, sizeof(buf), "skip next if v%x != 0x%02x (%u)", x, kk, kk);
+            std::snprintf(buf, sizeof(buf), "Skip next if V%X != 0x%02X (%u)", x, kk, kk);
             res.description = buf;
             break;
 
         case 0x5:
             if (n == 0) {
-                res.mnemonic = "se";
-                std::snprintf(buf, sizeof(buf), "v%x, v%x", x, y);
+                res.mnemonic = "SE";
+                std::snprintf(buf, sizeof(buf), "V%X, V%X", x, y);
                 res.operands = buf;
-                std::snprintf(buf, sizeof(buf), "skip next if v%x == v%x", x, y);
+                std::snprintf(buf, sizeof(buf), "Skip next if V%X == V%X", x, y);
                 res.description = buf;
             } else {
-                res.mnemonic = "data";
-                std::snprintf(buf, sizeof(buf), "0x%04x", opcode);
+                res.mnemonic = "DATA";
+                std::snprintf(buf, sizeof(buf), "0x%04X", opcode);
                 res.operands = buf;
-                res.description = "unknown / raw data";
+                res.description = "Unknown / raw data";
             }
             break;
 
         case 0x6:
-            res.mnemonic = "ld";
-            std::snprintf(buf, sizeof(buf), "v%x, 0x%02x", x, kk);
+            res.mnemonic = "LD";
+            std::snprintf(buf, sizeof(buf), "V%X, 0x%02X", x, kk);
             res.operands = buf;
-            std::snprintf(buf, sizeof(buf), "set v%x = 0x%02x (%u)", x, kk, kk);
+            std::snprintf(buf, sizeof(buf), "Set V%X = 0x%02X (%u)", x, kk, kk);
             res.description = buf;
             break;
 
         case 0x7:
-            res.mnemonic = "add";
-            std::snprintf(buf, sizeof(buf), "v%x, 0x%02x", x, kk);
+            res.mnemonic = "ADD";
+            std::snprintf(buf, sizeof(buf), "V%X, 0x%02X", x, kk);
             res.operands = buf;
-            std::snprintf(buf, sizeof(buf), "set v%x = v%x + 0x%02x (%u)", x, x, kk, kk);
+            std::snprintf(buf, sizeof(buf), "Set V%X = V%X + 0x%02X (%u)", x, x, kk, kk);
             res.description = buf;
             break;
 
         case 0x8:
             switch (n) {
                 case 0x0:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "v%x, v%x", x, y);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "V%X, V%X", x, y);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set v%x = v%x", x, y);
+                    std::snprintf(buf, sizeof(buf), "Set V%X = V%X", x, y);
                     res.description = buf;
                     break;
                 case 0x1:
-                    res.mnemonic = "or";
-                    std::snprintf(buf, sizeof(buf), "v%x, v%x", x, y);
+                    res.mnemonic = "OR";
+                    std::snprintf(buf, sizeof(buf), "V%X, V%X", x, y);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set v%x = v%x | v%x", x, x, y);
+                    std::snprintf(buf, sizeof(buf), "Set V%X = V%X | V%X", x, x, y);
                     res.description = buf;
                     break;
                 case 0x2:
-                    res.mnemonic = "and";
-                    std::snprintf(buf, sizeof(buf), "v%x, v%x", x, y);
+                    res.mnemonic = "AND";
+                    std::snprintf(buf, sizeof(buf), "V%X, V%X", x, y);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set v%x = v%x & v%x", x, x, y);
+                    std::snprintf(buf, sizeof(buf), "Set V%X = V%X & V%X", x, x, y);
                     res.description = buf;
                     break;
                 case 0x3:
-                    res.mnemonic = "xor";
-                    std::snprintf(buf, sizeof(buf), "v%x, v%x", x, y);
+                    res.mnemonic = "XOR";
+                    std::snprintf(buf, sizeof(buf), "V%X, V%X", x, y);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set v%x = v%x ^ v%x", x, x, y);
+                    std::snprintf(buf, sizeof(buf), "Set V%X = V%X ^ V%X", x, x, y);
                     res.description = buf;
                     break;
                 case 0x4:
-                    res.mnemonic = "add";
-                    std::snprintf(buf, sizeof(buf), "v%x, v%x", x, y);
+                    res.mnemonic = "ADD";
+                    std::snprintf(buf, sizeof(buf), "V%X, V%X", x, y);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set v%x = v%x + v%x, vf = carry", x, x, y);
+                    std::snprintf(buf, sizeof(buf), "Set V%X = V%X + V%X, VF = carry", x, x, y);
                     res.description = buf;
                     break;
                 case 0x5:
-                    res.mnemonic = "sub";
-                    std::snprintf(buf, sizeof(buf), "v%x, v%x", x, y);
+                    res.mnemonic = "SUB";
+                    std::snprintf(buf, sizeof(buf), "V%X, V%X", x, y);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set v%x = v%x - v%x, vf = !borrow", x, x, y);
+                    std::snprintf(buf, sizeof(buf), "Set V%X = V%X - V%X, VF = !borrow", x, x, y);
                     res.description = buf;
                     break;
                 case 0x6:
-                    res.mnemonic = "shr";
-                    std::snprintf(buf, sizeof(buf), "v%x {, v%x}", x, y);
+                    res.mnemonic = "SHR";
+                    std::snprintf(buf, sizeof(buf), "V%X {, V%X}", x, y);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set v%x = v%x >> 1, vf = lsb", x, x);
+                    std::snprintf(buf, sizeof(buf), "Set V%X = V%X >> 1, VF = lsb", x, x);
                     res.description = buf;
                     break;
                 case 0x7:
-                    res.mnemonic = "subn";
-                    std::snprintf(buf, sizeof(buf), "v%x, v%x", x, y);
+                    res.mnemonic = "SUBN";
+                    std::snprintf(buf, sizeof(buf), "V%X, V%X", x, y);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set v%x = v%x - v%x, vf = !borrow", x, y, x);
+                    std::snprintf(buf, sizeof(buf), "Set V%X = V%X - V%X, VF = !borrow", x, y, x);
                     res.description = buf;
                     break;
                 case 0xE:
-                    res.mnemonic = "shl";
-                    std::snprintf(buf, sizeof(buf), "v%x {, v%x}", x, y);
+                    res.mnemonic = "SHL";
+                    std::snprintf(buf, sizeof(buf), "V%X {, V%X}", x, y);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set v%x = v%x << 1, vf = msb", x, x);
+                    std::snprintf(buf, sizeof(buf), "Set V%X = V%X << 1, VF = msb", x, x);
                     res.description = buf;
                     break;
                 default:
-                    res.mnemonic = "data";
-                    std::snprintf(buf, sizeof(buf), "0x%04x", opcode);
+                    res.mnemonic = "DATA";
+                    std::snprintf(buf, sizeof(buf), "0x%04X", opcode);
                     res.operands = buf;
-                    res.description = "unknown opcode";
+                    res.description = "Unknown opcode";
                     break;
             }
             break;
 
         case 0x9:
             if (n == 0) {
-                res.mnemonic = "sne";
-                std::snprintf(buf, sizeof(buf), "v%x, v%x", x, y);
+                res.mnemonic = "SNE";
+                std::snprintf(buf, sizeof(buf), "V%X, V%X", x, y);
                 res.operands = buf;
-                std::snprintf(buf, sizeof(buf), "skip next if v%x != v%x", x, y);
+                std::snprintf(buf, sizeof(buf), "Skip next if V%X != V%X", x, y);
                 res.description = buf;
             } else {
-                res.mnemonic = "data";
-                std::snprintf(buf, sizeof(buf), "0x%04x", opcode);
+                res.mnemonic = "DATA";
+                std::snprintf(buf, sizeof(buf), "0x%04X", opcode);
                 res.operands = buf;
-                res.description = "unknown opcode";
+                res.description = "Unknown opcode";
             }
             break;
 
         case 0xA:
-            res.mnemonic = "ld";
-            std::snprintf(buf, sizeof(buf), "i, 0x%03x", nnn);
+            res.mnemonic = "LD";
+            std::snprintf(buf, sizeof(buf), "I, 0x%03X", nnn);
             res.operands = buf;
-            res.description = "set index i = 0x" + std::string(buf).substr(std::string(buf).find("0x") + 2);
+            res.description = "Set index I = 0x" + std::string(buf).substr(std::string(buf).find("0x") + 2);
             break;
 
         case 0xB:
-            res.mnemonic = "jp";
+            res.mnemonic = "JP";
             if (quirk_jump_vx) {
-                std::snprintf(buf, sizeof(buf), "v%x, 0x%03x", x, nnn);
+                std::snprintf(buf, sizeof(buf), "V%X, 0x%03X", x, nnn);
                 res.operands = buf;
-                std::snprintf(buf, sizeof(buf), "jump to 0x%03x + v%x (schip)", nnn, x);
+                std::snprintf(buf, sizeof(buf), "Jump to 0x%03X + V%X (SCHIP)", nnn, x);
                 res.description = buf;
                 res.is_schip = true;
             } else {
-                std::snprintf(buf, sizeof(buf), "v0, 0x%03x", nnn);
+                std::snprintf(buf, sizeof(buf), "V0, 0x%03X", nnn);
                 res.operands = buf;
-                std::snprintf(buf, sizeof(buf), "jump to 0x%03x + v0", nnn);
+                std::snprintf(buf, sizeof(buf), "Jump to 0x%03X + V0", nnn);
                 res.description = buf;
             }
             res.is_jump_or_call = true;
             break;
 
         case 0xC:
-            res.mnemonic = "rnd";
-            std::snprintf(buf, sizeof(buf), "v%x, 0x%02x", x, kk);
+            res.mnemonic = "RND";
+            std::snprintf(buf, sizeof(buf), "V%X, 0x%02X", x, kk);
             res.operands = buf;
-            std::snprintf(buf, sizeof(buf), "set v%x = random_byte & 0x%02x", x, kk);
+            std::snprintf(buf, sizeof(buf), "Set V%X = random_byte & 0x%02X", x, kk);
             res.description = buf;
             break;
 
         case 0xD:
-            res.mnemonic = "drw";
+            res.mnemonic = "DRW";
             if (n == 0) {
-                std::snprintf(buf, sizeof(buf), "v%x, v%x, 0", x, y);
+                std::snprintf(buf, sizeof(buf), "V%X, V%X, 0", x, y);
                 res.operands = buf;
-                std::snprintf(buf, sizeof(buf), "draw 16x16 sprite at (v%x, v%x)", x, y);
+                std::snprintf(buf, sizeof(buf), "Draw 16x16 sprite at (V%X, V%X)", x, y);
                 res.description = buf;
                 res.is_schip = true;
             } else {
-                std::snprintf(buf, sizeof(buf), "v%x, v%x, %u", x, y, n);
+                std::snprintf(buf, sizeof(buf), "V%X, V%X, %u", x, y, n);
                 res.operands = buf;
-                std::snprintf(buf, sizeof(buf), "draw 8x%u sprite at (v%x, v%x)", n, x, y);
+                std::snprintf(buf, sizeof(buf), "Draw 8x%u sprite at (V%X, V%X)", n, x, y);
                 res.description = buf;
             }
             break;
 
         case 0xE:
             if (kk == 0x9E) {
-                res.mnemonic = "skp";
-                std::snprintf(buf, sizeof(buf), "v%x", x);
+                res.mnemonic = "SKP";
+                std::snprintf(buf, sizeof(buf), "V%X", x);
                 res.operands = buf;
-                std::snprintf(buf, sizeof(buf), "skip next if key in v%x is pressed", x);
+                std::snprintf(buf, sizeof(buf), "Skip next if key in V%X is pressed", x);
                 res.description = buf;
             } else if (kk == 0xA1) {
-                res.mnemonic = "sknp";
-                std::snprintf(buf, sizeof(buf), "v%x", x);
+                res.mnemonic = "SKNP";
+                std::snprintf(buf, sizeof(buf), "V%X", x);
                 res.operands = buf;
-                std::snprintf(buf, sizeof(buf), "skip next if key in v%x not pressed", x);
+                std::snprintf(buf, sizeof(buf), "Skip next if key in V%X not pressed", x);
                 res.description = buf;
             } else {
-                res.mnemonic = "data";
-                std::snprintf(buf, sizeof(buf), "0x%04x", opcode);
+                res.mnemonic = "DATA";
+                std::snprintf(buf, sizeof(buf), "0x%04X", opcode);
                 res.operands = buf;
-                res.description = "unknown opcode";
+                res.description = "Unknown opcode";
             }
             break;
 
         case 0xF:
             switch (kk) {
                 case 0x07:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "v%x, dt", x);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "V%X, DT", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set v%x = delay timer", x);
+                    std::snprintf(buf, sizeof(buf), "Set V%X = delay timer", x);
                     res.description = buf;
                     break;
                 case 0x0A:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "v%x, k", x);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "V%X, K", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "wait for key press, store in v%x", x);
+                    std::snprintf(buf, sizeof(buf), "Wait for key press, store in V%X", x);
                     res.description = buf;
                     break;
                 case 0x15:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "dt, v%x", x);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "DT, V%X", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set delay timer = v%x", x);
+                    std::snprintf(buf, sizeof(buf), "Set delay timer = V%X", x);
                     res.description = buf;
                     break;
                 case 0x18:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "st, v%x", x);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "ST, V%X", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set sound timer = v%x", x);
+                    std::snprintf(buf, sizeof(buf), "Set sound timer = V%X", x);
                     res.description = buf;
                     break;
                 case 0x1E:
-                    res.mnemonic = "add";
-                    std::snprintf(buf, sizeof(buf), "i, v%x", x);
+                    res.mnemonic = "ADD";
+                    std::snprintf(buf, sizeof(buf), "I, V%X", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set index i = i + v%x", x);
+                    std::snprintf(buf, sizeof(buf), "Set index I = I + V%X", x);
                     res.description = buf;
                     break;
                 case 0x29:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "f, v%x", x);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "F, V%X", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set i = 5-byte font digit in v%x", x);
+                    std::snprintf(buf, sizeof(buf), "Set I = 5-byte font digit in V%X", x);
                     res.description = buf;
                     break;
                 case 0x30:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "hf, v%x", x);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "HF, V%X", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "set i = 10-byte font digit in v%x", x);
+                    std::snprintf(buf, sizeof(buf), "Set I = 10-byte font digit in V%X", x);
                     res.description = buf;
                     res.is_schip = true;
                     break;
                 case 0x33:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "b, v%x", x);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "B, V%X", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "store bcd of v%x at i, i+1, i+2", x);
+                    std::snprintf(buf, sizeof(buf), "Store BCD of V%X at I, I+1, I+2", x);
                     res.description = buf;
                     break;
                 case 0x55:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "[i], v%x", x);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "[I], V%X", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "store v0..v%x to memory starting at i", x);
+                    std::snprintf(buf, sizeof(buf), "Store V0..V%X to memory starting at I", x);
                     res.description = buf;
                     break;
                 case 0x65:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "v%x, [i]", x);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "V%X, [I]", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "load v0..v%x from memory starting at i", x);
+                    std::snprintf(buf, sizeof(buf), "Load V0..V%X from memory starting at I", x);
                     res.description = buf;
                     break;
                 case 0x75:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "r, v%x", x);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "R, V%X", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "save v0..v%x to rpl user flags", x);
+                    std::snprintf(buf, sizeof(buf), "Save V0..V%X to RPL user flags", x);
                     res.description = buf;
                     res.is_schip = true;
                     break;
                 case 0x85:
-                    res.mnemonic = "ld";
-                    std::snprintf(buf, sizeof(buf), "v%x, r", x);
+                    res.mnemonic = "LD";
+                    std::snprintf(buf, sizeof(buf), "V%X, R", x);
                     res.operands = buf;
-                    std::snprintf(buf, sizeof(buf), "load v0..v%x from rpl user flags", x);
+                    std::snprintf(buf, sizeof(buf), "Load V0..V%X from RPL user flags", x);
                     res.description = buf;
                     res.is_schip = true;
                     break;
                 default:
-                    res.mnemonic = "data";
-                    std::snprintf(buf, sizeof(buf), "0x%04x", opcode);
+                    res.mnemonic = "DATA";
+                    std::snprintf(buf, sizeof(buf), "0x%04X", opcode);
                     res.operands = buf;
-                    res.description = "unknown opcode";
+                    res.description = "Unknown opcode";
                     break;
             }
             break;

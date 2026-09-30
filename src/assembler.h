@@ -60,7 +60,7 @@ public:
                 if (!lbl.empty()) {
                     std::string upper_lbl = to_upper(lbl);
                     if (label_table.find(upper_lbl) != label_table.end()) {
-                        result.errors.push_back({line_num, "duplicate label definition: '" + lbl + "'"});
+                        result.errors.push_back({line_num, "Duplicate label definition: '" + lbl + "'"});
                     } else {
                         label_table[upper_lbl] = current_address;
                     }
@@ -98,19 +98,19 @@ public:
                 }
             }
 
-            
-            if (mnem == "db" || mnem == "byte") {
+            // Handle data directives (DB / DW)
+            if (mnem == "DB" || mnem == "BYTE") {
                 pl.is_data = true;
                 for (const auto& a : pl.args) {
                     uint32_t val = 0;
                     if (parse_number(a, val)) {
                         pl.raw_bytes.push_back(static_cast<uint8_t>(val & 0xFF));
                     } else {
-                        result.errors.push_back({line_num, "invalid byte data value: '" + a + "'"});
+                        result.errors.push_back({line_num, "Invalid byte data value: '" + a + "'"});
                     }
                 }
                 current_address += static_cast<uint16_t>(pl.raw_bytes.size());
-            } else if (mnem == "dw" || mnem == "word") {
+            } else if (mnem == "DW" || mnem == "WORD") {
                 pl.is_data = true;
                 for (const auto& a : pl.args) {
                     uint32_t val = 0;
@@ -118,12 +118,11 @@ public:
                         pl.raw_bytes.push_back(static_cast<uint8_t>((val >> 8) & 0xFF));
                         pl.raw_bytes.push_back(static_cast<uint8_t>(val & 0xFF));
                     } else {
-                        result.errors.push_back({line_num, "invalid word data value: '" + a + "'"});
+                        result.errors.push_back({line_num, "Invalid word data value: '" + a + "'"});
                     }
                 }
                 current_address += static_cast<uint16_t>(pl.raw_bytes.size());
             } else {
-                
                 current_address += 2;
             }
 
@@ -132,7 +131,7 @@ public:
 
         if (!result.errors.empty()) {
             result.success = false;
-            result.summary = "pass 1 failed with " + std::to_string(result.errors.size()) + " errors.";
+            result.summary = "Pass 1 failed with " + std::to_string(result.errors.size()) + " errors.";
             return result;
         }
 
@@ -160,10 +159,10 @@ public:
 
         if (result.errors.empty()) {
             result.success = true;
-            result.summary = "assembly succeeded! generated " + std::to_string(result.bytecode.size()) + " bytes.";
+            result.summary = "Assembly succeeded! Generated " + std::to_string(result.bytecode.size()) + " bytes.";
         } else {
             result.success = false;
-            result.summary = "assembly failed with " + std::to_string(result.errors.size()) + " errors.";
+            result.summary = "Assembly failed with " + std::to_string(result.errors.size()) + " errors.";
         }
 
         return result;
@@ -328,11 +327,11 @@ private:
         if (s.empty()) return false;
 
         try {
-            if (s.rfind("0x", 0) == 0 || s.rfind("0x", 0) == 0 || s.rfind("$", 0) == 0) {
-                size_t prefix = (s[0] == '$') ? 1 : 2;
+            if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0 || s.rfind("$", 0) == 0 || s.rfind("#", 0) == 0) {
+                size_t prefix = (s[0] == '$' || s[0] == '#') ? 1 : 2;
                 out_val = std::stoul(s.substr(prefix), nullptr, 16);
                 return true;
-            } else if (s.rfind("0b", 0) == 0 || s.rfind("0b", 0) == 0 || s.rfind("%", 0) == 0) {
+            } else if (s.rfind("0b", 0) == 0 || s.rfind("0B", 0) == 0 || s.rfind("%", 0) == 0) {
                 size_t prefix = (s[0] == '%') ? 1 : 2;
                 out_val = std::stoul(s.substr(prefix), nullptr, 2);
                 return true;
@@ -347,14 +346,25 @@ private:
 
     static bool parse_register(const std::string& str, uint8_t& out_reg) {
         std::string s = to_upper(trim(str));
-        if (s.length() >= 2 && s[0] == 'v') {
-            char c = s[1];
-            if (c >= '0' && c <= '9') {
-                out_reg = static_cast<uint8_t>(c - '0');
-                return true;
-            } else if (c >= 'a' && c <= 'f') {
-                out_reg = static_cast<uint8_t>(10 + (c - 'a'));
-                return true;
+        if (s.length() >= 2 && s[0] == 'V') {
+            std::string sub = s.substr(1);
+            if (sub.length() == 1) {
+                char c = sub[0];
+                if (c >= '0' && c <= '9') {
+                    out_reg = static_cast<uint8_t>(c - '0');
+                    return true;
+                } else if (c >= 'A' && c <= 'F') {
+                    out_reg = static_cast<uint8_t>(10 + (c - 'A'));
+                    return true;
+                }
+            } else if (sub.length() == 2) {
+                try {
+                    int num = std::stoi(sub);
+                    if (num >= 0 && num <= 15) {
+                        out_reg = static_cast<uint8_t>(num);
+                        return true;
+                    }
+                } catch (...) {}
             }
         }
         return false;
@@ -380,7 +390,7 @@ private:
             return true;
         }
 
-        errors.push_back({line_num, "unknown label or invalid address: '" + arg + "'"});
+        errors.push_back({line_num, "Unknown label or invalid address: '" + arg + "'"});
         return false;
     }
 
@@ -395,46 +405,54 @@ private:
     ) {
         (void)current_pc;
         
-        if (mnem == "cls")  { out_op = 0x00E0; return true; }
-        if (mnem == "ret")  { out_op = 0x00EE; return true; }
-        if (mnem == "scr")  { out_op = 0x00FB; return true; } 
-        if (mnem == "scl")  { out_op = 0x00FC; return true; } 
-        if (mnem == "exit" || mnem == "quit" || mnem == "hlt") { out_op = 0x00FD; return true; } 
-        if (mnem == "low")  { out_op = 0x00FE; return true; } 
-        if (mnem == "high") { out_op = 0x00FF; return true; } 
+        if (mnem == "CLS")  { out_op = 0x00E0; return true; }
+        if (mnem == "RET")  { out_op = 0x00EE; return true; }
+        if (mnem == "SCR")  { out_op = 0x00FB; return true; } 
+        if (mnem == "SCL")  { out_op = 0x00FC; return true; } 
+        if (mnem == "EXIT" || mnem == "QUIT" || mnem == "HLT") { out_op = 0x00FD; return true; } 
+        if (mnem == "LOW")  { out_op = 0x00FE; return true; } 
+        if (mnem == "HIGH") { out_op = 0x00FF; return true; } 
 
-        
-        if (mnem == "scd") {
+        if (mnem == "SYS") {
             if (args.size() != 1) {
-                errors.push_back({line_num, "scd expects 1 argument (number of lines, 0-15)"});
+                errors.push_back({line_num, "SYS expects 1 argument (routine address or label)"});
+                return false;
+            }
+            uint16_t addr = 0;
+            if (!resolve_address(line_num, args[0], labels, addr, errors)) return false;
+            out_op = 0x0000 | (addr & 0x0FFF);
+            return true;
+        }
+
+        if (mnem == "SCD") {
+            if (args.size() != 1) {
+                errors.push_back({line_num, "SCD expects 1 argument (number of lines, 0-15)"});
                 return false;
             }
             uint32_t lines = 0;
             if (!parse_number(args[0], lines) || lines > 15) {
-                errors.push_back({line_num, "scd line count must be between 0 and 15"});
+                errors.push_back({line_num, "SCD line count must be between 0 and 15"});
                 return false;
             }
             out_op = 0x00C0 | (lines & 0x0F);
             return true;
         }
 
-        
-        if (mnem == "scu") {
+        if (mnem == "SCU") {
             if (args.size() != 1) {
-                errors.push_back({line_num, "scu expects 1 argument (number of lines, 0-15)"});
+                errors.push_back({line_num, "SCU expects 1 argument (number of lines, 0-15)"});
                 return false;
             }
             uint32_t lines = 0;
             if (!parse_number(args[0], lines) || lines > 15) {
-                errors.push_back({line_num, "scu line count must be between 0 and 15"});
+                errors.push_back({line_num, "SCU line count must be between 0 and 15"});
                 return false;
             }
             out_op = 0x00D0 | (lines & 0x0F);
             return true;
         }
 
-        
-        if (mnem == "jp") {
+        if (mnem == "JP") {
             if (args.size() == 1) {
                 uint16_t addr = 0;
                 if (!resolve_address(line_num, args[0], labels, addr, errors)) return false;
@@ -442,7 +460,7 @@ private:
                 return true;
             } else if (args.size() == 2) {
                 std::string reg = to_upper(trim(args[0]));
-                if (reg == "v0") {
+                if (reg == "V0") {
                     uint16_t addr = 0;
                     if (!resolve_address(line_num, args[1], labels, addr, errors)) return false;
                     out_op = 0xB000 | (addr & 0x0FFF);
@@ -450,21 +468,20 @@ private:
                 } else {
                     uint8_t vx = 0;
                     if (parse_register(reg, vx)) {
-                        
                         uint16_t addr = 0;
                         if (!resolve_address(line_num, args[1], labels, addr, errors)) return false;
                         out_op = 0xB000 | (static_cast<uint16_t>(vx) << 8) | (addr & 0x00FF);
                         return true;
                     }
-                    errors.push_back({line_num, "first argument of jp v0, addr must be v0 or a register"});
+                    errors.push_back({line_num, "First argument of JP V0, addr must be V0 or a register"});
                     return false;
                 }
             }
         }
 
-        if (mnem == "call") {
+        if (mnem == "CALL") {
             if (args.size() != 1) {
-                errors.push_back({line_num, "call expects 1 argument (subroutine address or label)"});
+                errors.push_back({line_num, "CALL expects 1 argument (subroutine address or label)"});
                 return false;
             }
             uint16_t addr = 0;
@@ -473,15 +490,14 @@ private:
             return true;
         }
 
-        
-        if (mnem == "se") {
+        if (mnem == "SE") {
             if (args.size() != 2) {
-                errors.push_back({line_num, "se expects 2 arguments: se vx, byte or se vx, vy"});
+                errors.push_back({line_num, "SE expects 2 arguments: SE Vx, byte or SE Vx, Vy"});
                 return false;
             }
             uint8_t vx = 0;
             if (!parse_register(args[0], vx)) {
-                errors.push_back({line_num, "first argument of se must be register v0-vf"});
+                errors.push_back({line_num, "First argument of SE must be register V0-VF"});
                 return false;
             }
             uint8_t vy = 0;
@@ -491,7 +507,7 @@ private:
             } else {
                 uint32_t val = 0;
                 if (!parse_number(args[1], val)) {
-                    errors.push_back({line_num, "second argument of se must be register vy or byte literal"});
+                    errors.push_back({line_num, "Second argument of SE must be register Vy or byte literal"});
                     return false;
                 }
                 out_op = 0x3000 | (static_cast<uint16_t>(vx) << 8) | (val & 0xFF);
@@ -499,14 +515,14 @@ private:
             }
         }
 
-        if (mnem == "sne") {
+        if (mnem == "SNE") {
             if (args.size() != 2) {
-                errors.push_back({line_num, "sne expects 2 arguments: sne vx, byte or sne vx, vy"});
+                errors.push_back({line_num, "SNE expects 2 arguments: SNE Vx, byte or SNE Vx, Vy"});
                 return false;
             }
             uint8_t vx = 0;
             if (!parse_register(args[0], vx)) {
-                errors.push_back({line_num, "first argument of sne must be register v0-vf"});
+                errors.push_back({line_num, "First argument of SNE must be register V0-VF"});
                 return false;
             }
             uint8_t vy = 0;
@@ -516,7 +532,7 @@ private:
             } else {
                 uint32_t val = 0;
                 if (!parse_number(args[1], val)) {
-                    errors.push_back({line_num, "second argument of sne must be register vy or byte literal"});
+                    errors.push_back({line_num, "Second argument of SNE must be register Vy or byte literal"});
                     return false;
                 }
                 out_op = 0x4000 | (static_cast<uint16_t>(vx) << 8) | (val & 0xFF);
@@ -524,57 +540,54 @@ private:
             }
         }
 
-        
-        if (mnem == "drw") {
+        if (mnem == "DRW") {
             if (args.size() != 3) {
-                errors.push_back({line_num, "drw expects 3 arguments: drw vx, vy, nibble (or 0 for schip 16x16)"});
+                errors.push_back({line_num, "DRW expects 3 arguments: DRW Vx, Vy, nibble (or 0 for SCHIP 16x16)"});
                 return false;
             }
             uint8_t vx = 0, vy = 0;
             uint32_t height = 0;
             if (!parse_register(args[0], vx) || !parse_register(args[1], vy)) {
-                errors.push_back({line_num, "first two arguments of drw must be registers"});
+                errors.push_back({line_num, "First two arguments of DRW must be registers"});
                 return false;
             }
             if (!parse_number(args[2], height) || height > 15) {
-                errors.push_back({line_num, "drw sprite height must be 0-15"});
+                errors.push_back({line_num, "DRW sprite height must be 0-15"});
                 return false;
             }
             out_op = 0xD000 | (static_cast<uint16_t>(vx) << 8) | (static_cast<uint16_t>(vy) << 4) | (height & 0x0F);
             return true;
         }
 
-        
-        if (mnem == "skp") {
+        if (mnem == "SKP") {
             uint8_t vx = 0;
             if (args.size() != 1 || !parse_register(args[0], vx)) {
-                errors.push_back({line_num, "skp expects 1 register argument: skp vx"});
+                errors.push_back({line_num, "SKP expects 1 register argument: SKP Vx"});
                 return false;
             }
             out_op = 0xE09E | (static_cast<uint16_t>(vx) << 8);
             return true;
         }
-        if (mnem == "sknp") {
+        if (mnem == "SKNP") {
             uint8_t vx = 0;
             if (args.size() != 1 || !parse_register(args[0], vx)) {
-                errors.push_back({line_num, "sknp expects 1 register argument: sknp vx"});
+                errors.push_back({line_num, "SKNP expects 1 register argument: SKNP Vx"});
                 return false;
             }
             out_op = 0xE0A1 | (static_cast<uint16_t>(vx) << 8);
             return true;
         }
 
-        
-        if (mnem == "add") {
+        if (mnem == "ADD") {
             if (args.size() != 2) {
-                errors.push_back({line_num, "add expects 2 arguments"});
+                errors.push_back({line_num, "ADD expects 2 arguments"});
                 return false;
             }
             std::string arg0 = to_upper(trim(args[0]));
-            if (arg0 == "i") {
+            if (arg0 == "I") {
                 uint8_t vx = 0;
                 if (!parse_register(args[1], vx)) {
-                    errors.push_back({line_num, "add i, vx expects register vx"});
+                    errors.push_back({line_num, "ADD I, Vx expects register Vx"});
                     return false;
                 }
                 out_op = 0xF01E | (static_cast<uint16_t>(vx) << 8);
@@ -582,7 +595,7 @@ private:
             }
             uint8_t vx = 0;
             if (!parse_register(args[0], vx)) {
-                errors.push_back({line_num, "first argument of add must be register or i"});
+                errors.push_back({line_num, "First argument of ADD must be register or I"});
                 return false;
             }
             uint8_t vy = 0;
@@ -592,7 +605,7 @@ private:
             } else {
                 uint32_t val = 0;
                 if (!parse_number(args[1], val)) {
-                    errors.push_back({line_num, "second argument of add must be register or byte"});
+                    errors.push_back({line_num, "Second argument of ADD must be register or byte"});
                     return false;
                 }
                 out_op = 0x7000 | (static_cast<uint16_t>(vx) << 8) | (val & 0xFF);
@@ -600,56 +613,55 @@ private:
             }
         }
 
-        
-        if (mnem == "sub") {
+        if (mnem == "SUB") {
             uint8_t vx = 0, vy = 0;
             if (args.size() != 2 || !parse_register(args[0], vx) || !parse_register(args[1], vy)) {
-                errors.push_back({line_num, "sub expects 2 registers: sub vx, vy"});
+                errors.push_back({line_num, "SUB expects 2 registers: SUB Vx, Vy"});
                 return false;
             }
             out_op = 0x8005 | (static_cast<uint16_t>(vx) << 8) | (static_cast<uint16_t>(vy) << 4);
             return true;
         }
-        if (mnem == "subn") {
+        if (mnem == "SUBN") {
             uint8_t vx = 0, vy = 0;
             if (args.size() != 2 || !parse_register(args[0], vx) || !parse_register(args[1], vy)) {
-                errors.push_back({line_num, "subn expects 2 registers: subn vx, vy"});
+                errors.push_back({line_num, "SUBN expects 2 registers: SUBN Vx, Vy"});
                 return false;
             }
             out_op = 0x8007 | (static_cast<uint16_t>(vx) << 8) | (static_cast<uint16_t>(vy) << 4);
             return true;
         }
-        if (mnem == "or") {
+        if (mnem == "OR") {
             uint8_t vx = 0, vy = 0;
             if (args.size() != 2 || !parse_register(args[0], vx) || !parse_register(args[1], vy)) {
-                errors.push_back({line_num, "or expects 2 registers: or vx, vy"});
+                errors.push_back({line_num, "OR expects 2 registers: OR Vx, Vy"});
                 return false;
             }
             out_op = 0x8001 | (static_cast<uint16_t>(vx) << 8) | (static_cast<uint16_t>(vy) << 4);
             return true;
         }
-        if (mnem == "and") {
+        if (mnem == "AND") {
             uint8_t vx = 0, vy = 0;
             if (args.size() != 2 || !parse_register(args[0], vx) || !parse_register(args[1], vy)) {
-                errors.push_back({line_num, "and expects 2 registers: and vx, vy"});
+                errors.push_back({line_num, "AND expects 2 registers: AND Vx, Vy"});
                 return false;
             }
             out_op = 0x8002 | (static_cast<uint16_t>(vx) << 8) | (static_cast<uint16_t>(vy) << 4);
             return true;
         }
-        if (mnem == "xor") {
+        if (mnem == "XOR") {
             uint8_t vx = 0, vy = 0;
             if (args.size() != 2 || !parse_register(args[0], vx) || !parse_register(args[1], vy)) {
-                errors.push_back({line_num, "xor expects 2 registers: xor vx, vy"});
+                errors.push_back({line_num, "XOR expects 2 registers: XOR Vx, Vy"});
                 return false;
             }
             out_op = 0x8003 | (static_cast<uint16_t>(vx) << 8) | (static_cast<uint16_t>(vy) << 4);
             return true;
         }
-        if (mnem == "shr") {
+        if (mnem == "SHR") {
             uint8_t vx = 0;
             if (args.empty() || !parse_register(args[0], vx)) {
-                errors.push_back({line_num, "shr expects register: shr vx {, vy}"});
+                errors.push_back({line_num, "SHR expects register: SHR Vx {, Vy}"});
                 return false;
             }
             uint8_t vy = vx;
@@ -657,10 +669,10 @@ private:
             out_op = 0x8006 | (static_cast<uint16_t>(vx) << 8) | (static_cast<uint16_t>(vy) << 4);
             return true;
         }
-        if (mnem == "shl") {
+        if (mnem == "SHL") {
             uint8_t vx = 0;
             if (args.empty() || !parse_register(args[0], vx)) {
-                errors.push_back({line_num, "shl expects register: shl vx {, vy}"});
+                errors.push_back({line_num, "SHL expects register: SHL Vx {, Vy}"});
                 return false;
             }
             uint8_t vy = vx;
@@ -669,132 +681,117 @@ private:
             return true;
         }
 
-        
-        if (mnem == "rnd") {
+        if (mnem == "RND") {
             uint8_t vx = 0;
             uint32_t val = 0;
             if (args.size() != 2 || !parse_register(args[0], vx) || !parse_number(args[1], val)) {
-                errors.push_back({line_num, "rnd expects 2 arguments: rnd vx, byte"});
+                errors.push_back({line_num, "RND expects 2 arguments: RND Vx, byte"});
                 return false;
             }
             out_op = 0xC000 | (static_cast<uint16_t>(vx) << 8) | (val & 0xFF);
             return true;
         }
 
-        
-        if (mnem == "ld") {
+        if (mnem == "LD") {
             if (args.size() != 2) {
-                errors.push_back({line_num, "ld expects 2 arguments"});
+                errors.push_back({line_num, "LD expects 2 arguments"});
                 return false;
             }
             std::string dest = to_upper(trim(args[0]));
             std::string src  = to_upper(trim(args[1]));
 
-            
-            if (dest == "i") {
+            if (dest == "I" || dest == "[I]") {
+                uint8_t vx = 0;
+                if (dest == "[I]" || parse_register(src, vx)) {
+                    if (parse_register(src, vx)) {
+                        out_op = 0xF055 | (static_cast<uint16_t>(vx) << 8);
+                        return true;
+                    }
+                }
                 uint16_t addr = 0;
                 if (!resolve_address(line_num, src, labels, addr, errors)) return false;
                 out_op = 0xA000 | (addr & 0x0FFF);
                 return true;
             }
 
-            
-            if (dest == "dt") {
+            if (dest == "DT") {
                 uint8_t vx = 0;
                 if (!parse_register(src, vx)) {
-                    errors.push_back({line_num, "ld dt, vx expects register vx"});
+                    errors.push_back({line_num, "LD DT, Vx expects register Vx"});
                     return false;
                 }
                 out_op = 0xF015 | (static_cast<uint16_t>(vx) << 8);
                 return true;
             }
 
-            
-            if (dest == "st") {
+            if (dest == "ST") {
                 uint8_t vx = 0;
                 if (!parse_register(src, vx)) {
-                    errors.push_back({line_num, "ld st, vx expects register vx"});
+                    errors.push_back({line_num, "LD ST, Vx expects register Vx"});
                     return false;
                 }
                 out_op = 0xF018 | (static_cast<uint16_t>(vx) << 8);
                 return true;
             }
 
-            
-            if (dest == "f") {
+            if (dest == "F" || dest == "LF") {
                 uint8_t vx = 0;
                 if (!parse_register(src, vx)) {
-                    errors.push_back({line_num, "ld f, vx expects register vx"});
+                    errors.push_back({line_num, "LD F, Vx expects register Vx"});
                     return false;
                 }
                 out_op = 0xF029 | (static_cast<uint16_t>(vx) << 8);
                 return true;
             }
 
-            
-            if (dest == "hf") {
+            if (dest == "HF") {
                 uint8_t vx = 0;
                 if (!parse_register(src, vx)) {
-                    errors.push_back({line_num, "ld hf, vx expects register vx"});
+                    errors.push_back({line_num, "LD HF, Vx expects register Vx"});
                     return false;
                 }
                 out_op = 0xF030 | (static_cast<uint16_t>(vx) << 8);
                 return true;
             }
 
-            
-            if (dest == "b") {
+            if (dest == "B") {
                 uint8_t vx = 0;
                 if (!parse_register(src, vx)) {
-                    errors.push_back({line_num, "ld b, vx expects register vx"});
+                    errors.push_back({line_num, "LD B, Vx expects register Vx"});
                     return false;
                 }
                 out_op = 0xF033 | (static_cast<uint16_t>(vx) << 8);
                 return true;
             }
 
-            
-            if (dest == "[i]") {
+            if (dest == "R") {
                 uint8_t vx = 0;
                 if (!parse_register(src, vx)) {
-                    errors.push_back({line_num, "ld [i], vx expects register vx"});
-                    return false;
-                }
-                out_op = 0xF055 | (static_cast<uint16_t>(vx) << 8);
-                return true;
-            }
-
-            
-            if (dest == "r") {
-                uint8_t vx = 0;
-                if (!parse_register(src, vx)) {
-                    errors.push_back({line_num, "ld r, vx expects register vx"});
+                    errors.push_back({line_num, "LD R, Vx expects register Vx"});
                     return false;
                 }
                 out_op = 0xF075 | (static_cast<uint16_t>(vx) << 8);
                 return true;
             }
 
-            
             uint8_t vx = 0;
             if (parse_register(dest, vx)) {
-                
-                if (src == "dt") {
+                if (src == "DT") {
                     out_op = 0xF007 | (static_cast<uint16_t>(vx) << 8);
                     return true;
                 }
                 
-                if (src == "k") {
+                if (src == "K") {
                     out_op = 0xF00A | (static_cast<uint16_t>(vx) << 8);
                     return true;
                 }
                 
-                if (src == "[i]") {
+                if (src == "[I]" || src == "I") {
                     out_op = 0xF065 | (static_cast<uint16_t>(vx) << 8);
                     return true;
                 }
                 
-                if (src == "r") {
+                if (src == "R") {
                     out_op = 0xF085 | (static_cast<uint16_t>(vx) << 8);
                     return true;
                 }
@@ -813,7 +810,7 @@ private:
             }
         }
 
-        errors.push_back({line_num, "unrecognized instruction mnemonic: '" + mnem + "'"});
+        errors.push_back({line_num, "Unrecognized instruction mnemonic: '" + mnem + "'"});
         return false;
     }
 };

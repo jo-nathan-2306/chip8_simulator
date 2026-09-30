@@ -82,9 +82,16 @@ struct KeyMapping {
     }
 
     int get_chip8_key(SDL_Keycode sym) const {
+        SDL_Keycode norm_sym = (sym >= 'A' && sym <= 'Z') ? (sym + 32) : sym;
         for (int i = 0; i < 16; i++) {
-            if (keys[i] == sym) return i;
+            SDL_Keycode k = (keys[i] >= 'A' && keys[i] <= 'Z') ? (keys[i] + 32) : keys[i];
+            if (k == norm_sym) return i;
         }
+        // Universal Arrow Keys support for directional scrolling and movement
+        if (sym == SDLK_UP) return 0x2;     // Key 2 (Up / Scroll Up)
+        if (sym == SDLK_DOWN) return 0x8;   // Key 8 (Down / Scroll Down)
+        if (sym == SDLK_LEFT) return 0x4;   // Key 4 (Left / Scroll Left)
+        if (sym == SDLK_RIGHT) return 0x6;  // Key 6 (Right / Scroll Right)
         return -1;
     }
 
@@ -126,7 +133,7 @@ struct KeyMapping {
     static std::string get_key_name(SDL_Keycode sym) {
         const char* name = SDL_GetKeyName(sym);
         if (name && name[0] != '\0') return std::string(name);
-        return "unknown";
+        return "Unknown";
     }
 };
 

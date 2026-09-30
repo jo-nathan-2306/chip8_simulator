@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -30,7 +31,7 @@ struct RomFileInfo {
 inline bool detect_schip_rom(const std::string& path) {
     
     std::string ext = path.substr(path.find_last_of('.') + 1);
-    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     if (ext == "sc8" || ext == "schip") return true;
 
     std::ifstream file(path, std::ios::binary);
@@ -114,17 +115,16 @@ struct RomBrowserState {
 
                 if (entry.is_directory(ec)) {
                     info.is_directory = true;
-                    info.format_badge = "[dir]";
-                    info.size_str = "<dir>";
+                    info.format_badge = "[DIR]";
+                    info.size_str = "<DIR>";
                     dirs.push_back(info);
                 } else if (entry.is_regular_file(ec)) {
                     info.is_directory = false;
                     info.file_size = entry.file_size(ec);
 
                     std::string ext = entry.path().extension().string();
-                    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
-                    
                     bool is_rom_ext = (ext == ".ch8" || ext == ".sc8" || ext == ".rom" || ext == ".bin" || ext == ".chip8" || ext == ".c8");
 
                     if (type_filter_idx != 3 && !is_rom_ext) {
@@ -132,13 +132,13 @@ struct RomBrowserState {
                     }
 
                     info.is_schip = detect_schip_rom(info.full_path);
-                    info.format_badge = info.is_schip ? "[schip]" : "[chip-8]";
+                    info.format_badge = info.is_schip ? "[SCHIP]" : "[CHIP8]";
 
                     if (info.file_size < 1024) {
-                        info.size_str = std::to_string(info.file_size) + " b";
+                        info.size_str = std::to_string(info.file_size) + " B";
                     } else {
                         std::ostringstream ss;
-                        ss << std::fixed << std::setprecision(1) << (info.file_size / 1024.0) << " kb";
+                        ss << std::fixed << std::setprecision(1) << (info.file_size / 1024.0) << " KB";
                         info.size_str = ss.str();
                     }
 
@@ -150,8 +150,8 @@ struct RomBrowserState {
             auto sort_fn = [](const RomFileInfo& a, const RomFileInfo& b) {
                 std::string sa = a.filename;
                 std::string sb = b.filename;
-                std::transform(sa.begin(), sa.end(), sa.begin(), ::tolower);
-                std::transform(sb.begin(), sb.end(), sb.begin(), ::tolower);
+                std::transform(sa.begin(), sa.end(), sa.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                std::transform(sb.begin(), sb.end(), sb.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
                 return sa < sb;
             };
             std::sort(dirs.begin(), dirs.end(), sort_fn);
@@ -186,19 +186,17 @@ inline bool render_rom_browser_ui(bool* p_open, std::string& out_selected_path, 
     float bx = (disp_w - bw) * 0.5f;
     float by = 35.0f;
 
-    ImGui::SetNextWindowSize(ImVec2(bw, bh), ImGuiCond_Always);
-    ImGui::SetNextWindowPos(ImVec2(bx, by), ImGuiCond_Always);
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
-    if (ImGui::Begin("rom file browser", p_open, flags)) {
+    ImGui::SetNextWindowSize(ImVec2(bw, bh), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(bx, by), ImGuiCond_FirstUseEver);
+    ImGuiWindowFlags flags = ImGuiWindowFlags_None;
+    if (ImGui::Begin("ROM File Browser", p_open, flags)) {
 
-        
-        ImGui::TextDisabled("location:");
+        ImGui::TextDisabled("Location:");
         ImGui::SameLine();
         std::string current_dir_str = state.current_dir.string();
         ImGui::TextColored(ImVec4(0.0f, 0.88f, 0.82f, 1.0f), "%s", current_dir_str.c_str());
 
-        
-        if (ImGui::Button(".. up one folder")) {
+        if (ImGui::Button(".. Up One Folder")) {
             std::error_code ec;
             fs::path parent = state.current_dir.parent_path();
             if (!parent.empty() && fs::exists(parent, ec)) {
@@ -207,7 +205,7 @@ inline bool render_rom_browser_ui(bool* p_open, std::string& out_selected_path, 
             }
         }
         ImGui::SameLine();
-        if (ImGui::Button("roms/ folder")) {
+        if (ImGui::Button("ROMs/ Folder")) {
             std::error_code ec;
             if (fs::exists("roms", ec)) {
                 state.current_dir = "roms";
@@ -215,19 +213,18 @@ inline bool render_rom_browser_ui(bool* p_open, std::string& out_selected_path, 
             }
         }
         ImGui::SameLine();
-        if (ImGui::Button("refresh")) {
+        if (ImGui::Button("Refresh")) {
             state.refresh();
         }
 
         ImGui::SameLine(ImGui::GetWindowWidth() - 240);
         ImGui::SetNextItemWidth(220);
-        ImGui::InputTextWithHint("##search", "search roms...", state.search_filter, sizeof(state.search_filter));
+        ImGui::InputTextWithHint("##search", "Search ROMs...", state.search_filter, sizeof(state.search_filter));
 
         ImGui::Separator();
 
-        
         if (!state.recent_roms.empty()) {
-            ImGui::TextDisabled("recent roms:");
+            ImGui::TextDisabled("Recent ROMs:");
             ImGui::SameLine();
             for (size_t i = 0; i < state.recent_roms.size() && i < 5; i++) {
                 if (i > 0) ImGui::SameLine();
@@ -242,48 +239,44 @@ inline bool render_rom_browser_ui(bool* p_open, std::string& out_selected_path, 
             ImGui::Separator();
         }
 
-        
         float details_pane_width = 240.0f;
         float list_width = ImGui::GetContentRegionAvail().x - details_pane_width - 10.0f;
 
-        
         ImGui::BeginChild("##rom_list_child", ImVec2(list_width, -38.0f), true);
 
-        const char* const filter_options[] = { "all supported roms", "super-chip (schip) only", "chip-8 standard only", "all files (*.*)" };
+        const char* const filter_options[] = { "All Supported ROMs", "Super-CHIP (SCHIP) Only", "CHIP-8 Standard Only", "All Files (*.*)" };
         ImGui::SetNextItemWidth(200);
-        if (ImGui::Combo("filter", &state.type_filter_idx, filter_options, 4)) {
+        if (ImGui::Combo("Filter", &state.type_filter_idx, filter_options, 4)) {
             state.refresh();
         }
 
         if (!state.error_message.empty()) {
-            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "error: %s", state.error_message.c_str());
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Error: %s", state.error_message.c_str());
         }
 
         ImGuiTableFlags table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                                       ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY;
 
         if (ImGui::BeginTable("romtable", 3, table_flags)) {
-            ImGui::TableSetupColumn("type", ImGuiTableColumnFlags_WidthFixed, 65.0f);
-            ImGui::TableSetupColumn("name", ImGuiTableColumnFlags_WidthStretch);
-            ImGui::TableSetupColumn("size", ImGuiTableColumnFlags_WidthFixed, 75.0f);
+            ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 65.0f);
+            ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("Size", ImGuiTableColumnFlags_WidthFixed, 75.0f);
             ImGui::TableHeadersRow();
 
             std::string search_query = state.search_filter;
-            std::transform(search_query.begin(), search_query.end(), search_query.begin(), ::tolower);
+            std::transform(search_query.begin(), search_query.end(), search_query.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
             for (size_t i = 0; i < state.entries.size(); i++) {
                 const auto& item = state.entries[i];
 
-                
                 if (!search_query.empty()) {
                     std::string lower_name = item.filename;
-                    std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                    std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
                     if (lower_name.find(search_query) == std::string::npos) {
                         continue;
                     }
                 }
 
-                
                 if (!item.is_directory) {
                     if (state.type_filter_idx == 1 && !item.is_schip) continue;
                     if (state.type_filter_idx == 2 && item.is_schip) continue;
@@ -291,24 +284,21 @@ inline bool render_rom_browser_ui(bool* p_open, std::string& out_selected_path, 
 
                 ImGui::TableNextRow();
 
-                
                 ImGui::TableSetColumnIndex(0);
                 if (item.is_directory) {
-                    ImGui::TextColored(ImVec4(1.0f, 0.85f, 0.3f, 1.0f), "[dir]");
+                    ImGui::TextColored(ImVec4(1.0f, 0.85f, 0.3f, 1.0f), "[DIR]");
                 } else if (item.is_schip) {
-                    ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "[schip]");
+                    ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "[SCHIP]");
                 } else {
-                    ImGui::TextColored(ImVec4(0.3f, 0.95f, 0.5f, 1.0f), "[chip8]");
+                    ImGui::TextColored(ImVec4(0.3f, 0.95f, 0.5f, 1.0f), "[CHIP8]");
                 }
 
-                
                 ImGui::TableSetColumnIndex(1);
                 bool is_selected = (state.selected_idx == (int)i);
                 if (ImGui::Selectable(item.filename.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
                     state.selected_idx = (int)i;
                 }
 
-                
                 if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
                     if (item.is_directory) {
                         state.current_dir = item.full_path;
@@ -323,7 +313,6 @@ inline bool render_rom_browser_ui(bool* p_open, std::string& out_selected_path, 
                     }
                 }
 
-                
                 ImGui::TableSetColumnIndex(2);
                 ImGui::TextUnformatted(item.size_str.c_str());
             }
@@ -335,36 +324,35 @@ inline bool render_rom_browser_ui(bool* p_open, std::string& out_selected_path, 
 
         ImGui::SameLine();
 
-        
         ImGui::BeginChild("##rom_details_child", ImVec2(details_pane_width, -38.0f), true);
-        ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.24f, 1.0f), "rom details");
+        ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.24f, 1.0f), "ROM Details");
         ImGui::Separator();
 
         if (state.selected_idx >= 0 && state.selected_idx < (int)state.entries.size()) {
             const auto& sel = state.entries[state.selected_idx];
             if (sel.is_directory) {
-                ImGui::Text("directory: %s", sel.filename.c_str());
+                ImGui::Text("Directory: %s", sel.filename.c_str());
                 ImGui::Spacing();
-                if (ImGui::Button("open directory", ImVec2(-1, 30))) {
+                if (ImGui::Button("Open Directory", ImVec2(-1, 30))) {
                     state.current_dir = sel.full_path;
                     state.refresh();
                 }
             } else {
-                ImGui::TextWrapped("file: %s", sel.filename.c_str());
+                ImGui::TextWrapped("File: %s", sel.filename.c_str());
                 ImGui::Spacing();
-                ImGui::Text("size: %s", sel.size_str.c_str());
+                ImGui::Text("Size: %s", sel.size_str.c_str());
 
                 ImGui::Spacing();
-                ImGui::Text("architecture:");
+                ImGui::Text("Architecture:");
                 if (sel.is_schip) {
-                    ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "super-chip (schip)");
-                    ImGui::BulletText("extended 128x64 mode");
-                    ImGui::BulletText("16x16 / 8x10 sprites");
-                    ImGui::BulletText("hardware scrolling");
+                    ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "Super-CHIP (SCHIP)");
+                    ImGui::BulletText("Extended 128x64 Mode");
+                    ImGui::BulletText("16x16 / 8x10 Sprites");
+                    ImGui::BulletText("Hardware Scrolling");
                 } else {
-                    ImGui::TextColored(ImVec4(0.3f, 0.95f, 0.5f, 1.0f), "standard chip-8");
-                    ImGui::BulletText("monochrome 64x32");
-                    ImGui::BulletText("35 standard opcodes");
+                    ImGui::TextColored(ImVec4(0.3f, 0.95f, 0.5f, 1.0f), "Standard CHIP-8");
+                    ImGui::BulletText("Monochrome 64x32");
+                    ImGui::BulletText("35 Standard Opcodes");
                 }
 
                 ImGui::Spacing();
@@ -373,7 +361,7 @@ inline bool render_rom_browser_ui(bool* p_open, std::string& out_selected_path, 
 
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.12f, 0.55f, 0.32f, 0.9f));
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.18f, 0.70f, 0.40f, 1.0f));
-                if (ImGui::Button("  load rom  ", ImVec2(-1, 36))) {
+                if (ImGui::Button("  Load ROM  ", ImVec2(-1, 36))) {
                     out_selected_path = sel.full_path;
                     state.add_recent(out_selected_path);
                     *p_open = false;
@@ -382,21 +370,20 @@ inline bool render_rom_browser_ui(bool* p_open, std::string& out_selected_path, 
                 ImGui::PopStyleColor(2);
             }
         } else {
-            ImGui::TextDisabled("select a rom file from the list to view info and launch.");
+            ImGui::TextDisabled("Select a ROM file from the list to view info and launch.");
         }
         ImGui::EndChild();
 
-        
         ImGui::Separator();
-        if (ImGui::Button("close", ImVec2(100, 0))) {
+        if (ImGui::Button("Close", ImVec2(100, 0))) {
             *p_open = false;
         }
         ImGui::SameLine();
-        ImGui::TextDisabled("tip: double-click any file to launch immediately. schip roms are auto-detected!");
+        ImGui::TextDisabled("Tip: Double-click any file to launch immediately. SCHIP ROMs are auto-detected!");
     }
     ImGui::End();
 
     return rom_chosen;
 }
 
-#endif 
+#endif

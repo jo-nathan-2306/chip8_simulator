@@ -16,11 +16,11 @@ enum WaveformType {
 };
 
 inline const char* const WAVEFORM_NAMES[] = {
-    "sine wave (smooth)",
-    "square / pulse (classic 8-bit)",
-    "sawtooth wave (arcade)",
-    "triangle wave (retro bass)",
-    "noise (8-bit static)"
+    "Sine Wave (Smooth)",
+    "Square / Pulse (Classic 8-bit)",
+    "Sawtooth Wave (Arcade)",
+    "Triangle Wave (Retro Bass)",
+    "Noise (8-bit Static)"
 };
 inline const int WAVEFORM_COUNT = 5;
 

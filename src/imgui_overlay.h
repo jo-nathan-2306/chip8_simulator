@@ -18,6 +18,7 @@
 #include <vector>
 #include <cstdio>
 #include <algorithm>
+#include <filesystem>
 
 inline std::string get_savestate_path(const std::string& rom_path, int slot) {
     std::string base = rom_path.empty() ? "norom" : rom_path;
@@ -38,7 +39,7 @@ struct OverlayState {
     bool show_shortcuts = false;        
     bool show_demo = false;             
     
-    std::string status_msg = "ready";
+    std::string status_msg = "Ready";
     bool status_is_error = false;
     Uint32 status_timestamp = 0;
 
@@ -133,16 +134,16 @@ inline void render_imgui_overlay_ui(
 
     
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("file")) {
-            if (ImGui::MenuItem("open", "ctrl+o")) {
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("Open ROM...", "Ctrl+O")) {
                 state.show_rom_browser = true;
                 rom_browser_state.refresh();
             }
 
             if (!rom_browser_state.recent_roms.empty()) {
-                if (ImGui::BeginMenu("recent roms")) {
+                if (ImGui::BeginMenu("Recent ROMs")) {
                     for (const auto& rpath : rom_browser_state.recent_roms) {
-                        std::string rname = fs::path(rpath).filename().string();
+                        std::string rname = std::filesystem::path(rpath).filename().string();
                         if (ImGui::MenuItem(rname.c_str())) {
                             rom_filename = rpath;
                             rom_load_requested = true;
@@ -153,107 +154,107 @@ inline void render_imgui_overlay_ui(
             }
 
             ImGui::Separator();
-            if (ImGui::MenuItem("quick save", "f5 / ctrl+s", false, !rom_filename.empty())) {
+            if (ImGui::MenuItem("Quick Save", "F5 / Ctrl+S", false, !rom_filename.empty())) {
                 std::string path = get_savestate_path(rom_filename, current_slot);
                 if (chip8.save_state(path)) {
-                    state.set_status("saved state to slot " + std::to_string(current_slot));
+                    state.set_status("Saved state to Slot " + std::to_string(current_slot));
                 } else {
-                    state.set_status("failed to save state", true);
+                    state.set_status("Failed to save state", true);
                 }
             }
-            if (ImGui::MenuItem("quick load", "f6 / ctrl+l", false, !rom_filename.empty())) {
+            if (ImGui::MenuItem("Quick Load", "F6 / Ctrl+L", false, !rom_filename.empty())) {
                 std::string path = get_savestate_path(rom_filename, current_slot);
                 if (chip8.load_state(path)) {
-                    state.set_status("loaded state from slot " + std::to_string(current_slot));
+                    state.set_status("Loaded state from Slot " + std::to_string(current_slot));
                 } else {
-                    state.set_status("slot " + std::to_string(current_slot) + " not found", true);
+                    state.set_status("Slot " + std::to_string(current_slot) + " not found", true);
                 }
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("reload rom", "ctrl+r", false, !rom_filename.empty())) {
+            if (ImGui::MenuItem("Reload ROM", "Ctrl+R", false, !rom_filename.empty())) {
                 chip8.reset();
                 chip8.load_rom(rom_filename);
-                state.set_status("vm reset and rom reloaded");
+                state.set_status("VM Reset and ROM reloaded");
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("quit", "esc")) {
+            if (ImGui::MenuItem("Quit", "Esc")) {
                 running = false;
             }
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("emulation")) {
+        if (ImGui::BeginMenu("Emulation")) {
             if (chip8.is_extended_mode()) {
-                ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "mode: super-chip (128x64)");
+                ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "Mode: Super-CHIP (128x64)");
             } else {
-                ImGui::TextColored(ImVec4(0.3f, 0.95f, 0.5f, 1.0f), "mode: standard chip-8 (64x32)");
+                ImGui::TextColored(ImVec4(0.3f, 0.95f, 0.5f, 1.0f), "Mode: Standard CHIP-8 (64x32)");
             }
             ImGui::Separator();
-            if (ImGui::MenuItem(paused ? "resume" : "pause", "space / p", paused)) {
+            if (ImGui::MenuItem(paused ? "Resume" : "Pause", "Space / P", paused)) {
                 paused = !paused;
-                state.set_status(paused ? "paused" : "resumed");
+                state.set_status(paused ? "Paused" : "Resumed");
             }
-            if (ImGui::MenuItem("step 1 frame", ".", false, paused)) {
+            if (ImGui::MenuItem("Step 1 Frame", ".", false, paused)) {
                 step_one_frame = true;
-                state.set_status("stepped 1 frame");
+                state.set_status("Stepped 1 Frame");
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("speed: 120 hz (slow)")) { cycles_per_frame = 2; }
-            if (ImGui::MenuItem("speed: 300 hz"))        { cycles_per_frame = 5; }
-            if (ImGui::MenuItem("speed: 600 hz (normal)")) { cycles_per_frame = 10; }
-            if (ImGui::MenuItem("speed: 1200 hz (2x)"))  { cycles_per_frame = 20; }
-            if (ImGui::MenuItem("speed: 1800 hz (schip)")) { cycles_per_frame = 30; }
-            if (ImGui::MenuItem("speed: 3000 hz (turbo)")) { cycles_per_frame = 50; }
+            if (ImGui::MenuItem("Speed: 120 Hz (Slow)")) { cycles_per_frame = 2; }
+            if (ImGui::MenuItem("Speed: 300 Hz"))        { cycles_per_frame = 5; }
+            if (ImGui::MenuItem("Speed: 600 Hz (Normal)")) { cycles_per_frame = 10; }
+            if (ImGui::MenuItem("Speed: 1200 Hz (2x)"))  { cycles_per_frame = 20; }
+            if (ImGui::MenuItem("Speed: 1800 Hz (SCHIP)")) { cycles_per_frame = 30; }
+            if (ImGui::MenuItem("Speed: 3000 Hz (Turbo)")) { cycles_per_frame = 50; }
             ImGui::Separator();
 
-            if (ImGui::BeginMenu("compatibility & quirks")) {
-                if (ImGui::MenuItem("preset: super-chip 1.1 (schip)")) {
+            if (ImGui::BeginMenu("Compatibility & Quirks")) {
+                if (ImGui::MenuItem("Preset: Super-CHIP 1.1 (SCHIP)")) {
                     chip8.set_quirk_shift_vx(true);
                     chip8.set_quirk_load_store_no_i(true);
                     chip8.set_quirk_jump_vx(true);
                     chip8.set_quirk_legacy_scroll(false);
                     chip8.set_quirk_vf_reset(false);
                     cycles_per_frame = 30;
-                    state.set_status("applied super-chip 1.1 quirks (1800 hz)");
+                    state.set_status("Applied Super-CHIP 1.1 quirks (1800 Hz)");
                 }
-                if (ImGui::MenuItem("preset: modern xo-chip / octo")) {
+                if (ImGui::MenuItem("Preset: Modern XO-CHIP / Octo")) {
                     chip8.set_quirk_shift_vx(true);
                     chip8.set_quirk_load_store_no_i(true);
                     chip8.set_quirk_jump_vx(false);
                     chip8.set_quirk_legacy_scroll(false);
                     chip8.set_quirk_vf_reset(false);
                     cycles_per_frame = 20;
-                    state.set_status("applied modern xo-chip quirks (1200 hz)");
+                    state.set_status("Applied modern XO-CHIP quirks (1200 Hz)");
                 }
-                if (ImGui::MenuItem("preset: classic cosmac vip (1977)")) {
+                if (ImGui::MenuItem("Preset: Classic COSMAC VIP (1977)")) {
                     chip8.set_quirk_shift_vx(false);
                     chip8.set_quirk_load_store_no_i(false);
                     chip8.set_quirk_jump_vx(false);
                     chip8.set_quirk_legacy_scroll(false);
                     chip8.set_quirk_vf_reset(true);
                     cycles_per_frame = 10;
-                    state.set_status("applied cosmac vip quirks (600 hz)");
+                    state.set_status("Applied COSMAC VIP quirks (600 Hz)");
                 }
                 ImGui::Separator();
 
                 bool q_shift = chip8.get_quirk_shift_vx();
-                if (ImGui::MenuItem("shift in-place (vx >>= 1) [schip]", nullptr, q_shift)) {
+                if (ImGui::MenuItem("Shift in-place (Vx >>= 1) [SCHIP]", nullptr, q_shift)) {
                     chip8.set_quirk_shift_vx(!q_shift);
                 }
                 bool q_load = chip8.get_quirk_load_store_no_i();
-                if (ImGui::MenuItem("memory i unchanged on fx55/fx65 [schip]", nullptr, q_load)) {
+                if (ImGui::MenuItem("Memory I unchanged on Fx55/Fx65 [SCHIP]", nullptr, q_load)) {
                     chip8.set_quirk_load_store_no_i(!q_load);
                 }
                 bool q_jump = chip8.get_quirk_jump_vx();
-                if (ImGui::MenuItem("jump with offset bxnn [schip]", nullptr, q_jump)) {
+                if (ImGui::MenuItem("Jump with offset Bxnn [SCHIP]", nullptr, q_jump)) {
                     chip8.set_quirk_jump_vx(!q_jump);
                 }
                 bool q_scroll = chip8.get_quirk_legacy_scroll();
-                if (ImGui::MenuItem("legacy half-line scrolling [hp-48]", nullptr, q_scroll)) {
+                if (ImGui::MenuItem("Legacy half-line scrolling [HP-48]", nullptr, q_scroll)) {
                     chip8.set_quirk_legacy_scroll(!q_scroll);
                 }
                 bool q_vf = chip8.get_quirk_vf_reset();
-                if (ImGui::MenuItem("reset vf on 8xy1-3 bitwise ops [vip]", nullptr, q_vf)) {
+                if (ImGui::MenuItem("Reset VF on 8xy1-3 bitwise ops [VIP]", nullptr, q_vf)) {
                     chip8.set_quirk_vf_reset(!q_vf);
                 }
                 ImGui::EndMenu();
@@ -261,26 +262,26 @@ inline void render_imgui_overlay_ui(
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("view")) {
-            ImGui::MenuItem("show all ui overlay", "ctrl+u", &state.show_overlay);
+        if (ImGui::BeginMenu("View")) {
+            ImGui::MenuItem("Show All UI Overlay", "Ctrl+U", &state.show_overlay);
             ImGui::Separator();
-            ImGui::MenuItem("control panel", "f2", &state.show_control_panel);
-            ImGui::MenuItem("cpu registers & timers inspector", "f3", &state.show_inspector);
-            ImGui::MenuItem("virtual keypad", "f4", &state.show_keypad);
-            ImGui::MenuItem("sound synthesizer panel", "f8", &state.show_audio_panel);
+            ImGui::MenuItem("Control Panel", "F2", &state.show_control_panel);
+            ImGui::MenuItem("CPU Registers & Timers Inspector", "F3", &state.show_inspector);
+            ImGui::MenuItem("Virtual Keypad", "F4", &state.show_keypad);
+            ImGui::MenuItem("Sound Synthesizer Panel", "F8", &state.show_audio_panel);
             ImGui::Separator();
-            ImGui::MenuItem("disassembler / debugger window", "f12 / ctrl+d", &debugger_state.show_debugger);
-            ImGui::MenuItem("chip-8 code editor & assembler", "ctrl+e", &editor_state.show_editor);
-            ImGui::MenuItem("custom keyboard mapping", "ctrl+k", &keymap_ui_state.show_keymap_window);
-            ImGui::MenuItem("rom file browser", "ctrl+o", &state.show_rom_browser);
+            ImGui::MenuItem("Disassembler / Debugger Window", "F12 / Ctrl+D", &debugger_state.show_debugger);
+            ImGui::MenuItem("CHIP-8 Code Editor & Assembler", "Ctrl+E", &editor_state.show_editor);
+            ImGui::MenuItem("Custom Keyboard Mapping", "Ctrl+K", &keymap_ui_state.show_keymap_window);
+            ImGui::MenuItem("ROM File Browser", "Ctrl+O", &state.show_rom_browser);
             ImGui::Separator();
-            if (ImGui::MenuItem("show all floating panels")) {
+            if (ImGui::MenuItem("Show All Floating Panels")) {
                 state.show_control_panel = true;
                 state.show_inspector = true;
                 state.show_keypad = true;
                 state.show_audio_panel = true;
             }
-            if (ImGui::MenuItem("hide all floating panels")) {
+            if (ImGui::MenuItem("Hide All Floating Panels")) {
                 state.show_control_panel = false;
                 state.show_inspector = false;
                 state.show_keypad = false;
@@ -293,49 +294,49 @@ inline void render_imgui_overlay_ui(
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("debug")) {
-            ImGui::MenuItem("disassembler/debugger window", "f12 / ctrl+d", &debugger_state.show_debugger);
+        if (ImGui::BeginMenu("Debug")) {
+            ImGui::MenuItem("Disassembler / Debugger Window", "F12 / Ctrl+D", &debugger_state.show_debugger);
             ImGui::Separator();
-            if (ImGui::MenuItem(paused ? "continue execution" : "pause execution", "space / p")) {
+            if (ImGui::MenuItem(paused ? "Continue Execution" : "Pause Execution", "Space / P")) {
                 paused = !paused;
-                state.set_status(paused ? "paused" : "resumed");
+                state.set_status(paused ? "Paused" : "Resumed");
             }
-            if (ImGui::MenuItem("step single cycle", "f10", false, paused)) {
+            if (ImGui::MenuItem("Step Single Cycle", "F10", false, paused)) {
                 debugger_state.step_instruction = true;
             }
-            if (ImGui::MenuItem("step over subroutine", "shift+f10", false, paused)) {
+            if (ImGui::MenuItem("Step Over Subroutine", "Shift+F10", false, paused)) {
                 debugger_state.step_over = true;
             }
-            if (ImGui::MenuItem("step 1 frame", "f11 / .", false, paused)) {
+            if (ImGui::MenuItem("Step 1 Frame", "F11 / .", false, paused)) {
                 step_one_frame = true;
-                state.set_status("stepped 1 frame");
+                state.set_status("Stepped 1 Frame");
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("toggle breakpoint at pc", "f9")) {
+            if (ImGui::MenuItem("Toggle Breakpoint at PC", "F9")) {
                 debugger_state.toggle_breakpoint(chip8.get_pc());
                 char bmsg[64];
-                std::snprintf(bmsg, sizeof(bmsg), "toggled breakpoint at 0x%04x", chip8.get_pc());
+                std::snprintf(bmsg, sizeof(bmsg), "Toggled Breakpoint at 0x%04X", chip8.get_pc());
                 state.set_status(bmsg);
             }
-            if (ImGui::MenuItem("clear all breakpoints", nullptr, false, !debugger_state.breakpoints.empty())) {
+            if (ImGui::MenuItem("Clear All Breakpoints", nullptr, false, !debugger_state.breakpoints.empty())) {
                 debugger_state.clear_breakpoints();
-                state.set_status("cleared all breakpoints");
+                state.set_status("Cleared all Breakpoints");
             }
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("tools")) {
-            ImGui::MenuItem("chip-8 code editor & assembler", "ctrl+e", &editor_state.show_editor);
-            ImGui::MenuItem("custom keyboard mapping", "ctrl+k", &keymap_ui_state.show_keymap_window);
+        if (ImGui::BeginMenu("Tools")) {
+            ImGui::MenuItem("CHIP-8 Code Editor & Assembler", "Ctrl+E", &editor_state.show_editor);
+            ImGui::MenuItem("Custom Keyboard Mapping", "Ctrl+K", &keymap_ui_state.show_keymap_window);
             ImGui::Separator();
-            ImGui::MenuItem("sound synthesizer panel", "f8", &state.show_audio_panel);
-            ImGui::MenuItem("control panel", "f2", &state.show_control_panel);
-            ImGui::MenuItem("cpu registers inspector", "f3", &state.show_inspector);
-            ImGui::MenuItem("virtual keypad", "f4", &state.show_keypad);
+            ImGui::MenuItem("Sound Synthesizer Panel", "F8", &state.show_audio_panel);
+            ImGui::MenuItem("Control Panel", "F2", &state.show_control_panel);
+            ImGui::MenuItem("CPU Registers Inspector", "F3", &state.show_inspector);
+            ImGui::MenuItem("Virtual Keypad", "F4", &state.show_keypad);
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("color themes")) {
+        if (ImGui::BeginMenu("Color Themes")) {
             for (size_t i = 0; i < PALETTES.size(); i++) {
                 bool is_selected = (!state.use_custom_colors && current_palette_idx == i);
                 if (ImGui::MenuItem(PALETTES[i].name.c_str(), nullptr, is_selected)) {
@@ -348,14 +349,14 @@ inline void render_imgui_overlay_ui(
                     state.custom_fg[0] = active_palette.fg.r / 255.0f;
                     state.custom_fg[1] = active_palette.fg.g / 255.0f;
                     state.custom_fg[2] = active_palette.fg.b / 255.0f;
-                    state.set_status("theme: " + active_palette.name);
+                    state.set_status("Theme: " + active_palette.name);
                 }
             }
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("help")) {
-            if (ImGui::MenuItem("keyboard controls & shortcuts", "h / f1")) {
+        if (ImGui::BeginMenu("Help")) {
+            if (ImGui::MenuItem("Keyboard Controls & Shortcuts", "H / F1")) {
                 state.show_shortcuts = true;
             }
             ImGui::EndMenu();
@@ -366,14 +367,14 @@ inline void render_imgui_overlay_ui(
         if (right_indent > 250.0f) {
             ImGui::SameLine(right_indent);
             if (chip8.is_extended_mode()) {
-                ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "[schip 128x64]");
+                ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "[SCHIP 128x64]");
             } else {
-                ImGui::TextColored(ImVec4(0.3f, 0.95f, 0.5f, 1.0f), "[chip-8 64x32]");
+                ImGui::TextColored(ImVec4(0.3f, 0.95f, 0.5f, 1.0f), "[CHIP-8 64x32]");
             }
             ImGui::SameLine();
-            ImGui::Text("| %d hz", cycles_per_frame * 60);
+            ImGui::Text("| %d Hz", cycles_per_frame * 60);
             ImGui::SameLine();
-            ImGui::Text("| slot:%d", current_slot);
+            ImGui::Text("| Slot: %d", current_slot);
         }
 
         ImGui::EndMainMenuBar();
@@ -389,14 +390,7 @@ inline void render_imgui_overlay_ui(
     }
 
     
-    bool modal_or_tool_active = debugger_state.show_debugger || editor_state.show_editor || 
-                                state.show_rom_browser || keymap_ui_state.show_keymap_window || 
-                                state.show_shortcuts;
-
-    if (modal_or_tool_active) {
-        
-        
-    } else if (!state.show_overlay) {
+    if (!state.show_overlay) {
         
         float disp_w = ImGui::GetIO().DisplaySize.x;
         float disp_h = ImGui::GetIO().DisplaySize.y;
@@ -409,10 +403,10 @@ inline void render_imgui_overlay_ui(
         ImGui::SetNextWindowPos(ImVec2(scr_x, scr_y), ImGuiCond_Always);
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
 
-        std::string title = "chip-8 emulation display";
-        if (!rom_filename.empty()) title += " - " + fs::path(rom_filename).filename().string();
-        title += chip8.is_extended_mode() ? " [schip 128x64]" : " [chip-8 64x32]";
-        if (paused) title += " [paused]";
+        std::string title = "CHIP-8 Emulation Display";
+        if (!rom_filename.empty()) title += " - " + std::filesystem::path(rom_filename).filename().string();
+        title += chip8.is_extended_mode() ? " [SCHIP 128x64]" : " [CHIP-8 64x32]";
+        if (paused) title += " [Paused]";
         title += "###emulationdisplay";
 
         if (ImGui::Begin(title.c_str(), nullptr, flags)) {
@@ -431,8 +425,12 @@ inline void render_imgui_overlay_ui(
             float offset_x = canvas_pos.x + (canvas_size.x - draw_w) * 0.5f;
             float offset_y = canvas_pos.y + (canvas_size.y - draw_h) * 0.5f;
 
-            ImU32 col_bg = IM_COL32(active_palette.bg.r, active_palette.bg.g, active_palette.bg.b, 255);
-            ImU32 col_fg = IM_COL32(active_palette.fg.r, active_palette.fg.g, active_palette.fg.b, 255);
+            ImU32 col_bg = state.use_custom_colors ? 
+                IM_COL32((int)(state.custom_bg[0] * 255), (int)(state.custom_bg[1] * 255), (int)(state.custom_bg[2] * 255), 255) :
+                IM_COL32(active_palette.bg.r, active_palette.bg.g, active_palette.bg.b, 255);
+            ImU32 col_fg = state.use_custom_colors ? 
+                IM_COL32((int)(state.custom_fg[0] * 255), (int)(state.custom_fg[1] * 255), (int)(state.custom_fg[2] * 255), 255) :
+                IM_COL32(active_palette.fg.r, active_palette.fg.g, active_palette.fg.b, 255);
             ImU32 col_border = IM_COL32(60, 75, 95, 255);
 
             draw_list->AddRectFilled(ImVec2(offset_x, offset_y), ImVec2(offset_x + draw_w, offset_y + draw_h), col_bg);
@@ -482,10 +480,10 @@ inline void render_imgui_overlay_ui(
             ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | 
                                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
 
-            std::string title = "emulation screen";
-            if (!rom_filename.empty()) title += " - " + fs::path(rom_filename).filename().string();
-            title += chip8.is_extended_mode() ? " [schip 128x64]" : " [chip-8 64x32]";
-            if (paused) title += " [paused]";
+            std::string title = "Emulation Screen";
+            if (!rom_filename.empty()) title += " - " + std::filesystem::path(rom_filename).filename().string();
+            title += chip8.is_extended_mode() ? " [SCHIP 128x64]" : " [CHIP-8 64x32]";
+            if (paused) title += " [Paused]";
             title += "###emulationdisplay";
 
             if (ImGui::Begin(title.c_str(), nullptr, flags)) {
@@ -505,8 +503,12 @@ inline void render_imgui_overlay_ui(
                     float offset_x = canvas_pos.x + (canvas_size.x - draw_w) * 0.5f;
                     float offset_y = canvas_pos.y + (canvas_size.y - draw_h) * 0.5f;
 
-                    ImU32 col_bg = IM_COL32(active_palette.bg.r, active_palette.bg.g, active_palette.bg.b, 255);
-                    ImU32 col_fg = IM_COL32(active_palette.fg.r, active_palette.fg.g, active_palette.fg.b, 255);
+                    ImU32 col_bg = state.use_custom_colors ? 
+                        IM_COL32((int)(state.custom_bg[0] * 255), (int)(state.custom_bg[1] * 255), (int)(state.custom_bg[2] * 255), 255) :
+                        IM_COL32(active_palette.bg.r, active_palette.bg.g, active_palette.bg.b, 255);
+                    ImU32 col_fg = state.use_custom_colors ? 
+                        IM_COL32((int)(state.custom_fg[0] * 255), (int)(state.custom_fg[1] * 255), (int)(state.custom_fg[2] * 255), 255) :
+                        IM_COL32(active_palette.fg.r, active_palette.fg.g, active_palette.fg.b, 255);
                     ImU32 col_border = IM_COL32(50, 65, 85, 255);
 
                     
@@ -532,13 +534,13 @@ inline void render_imgui_overlay_ui(
                     draw_list->AddRect(ImVec2(offset_x, offset_y), ImVec2(offset_x + draw_w, offset_y + draw_h), col_border, 1.0f);
 
                     if (rom_filename.empty()) {
-                        const char* msg = "no rom loaded. press ctrl+o to open rom browser.";
+                        const char* msg = "No ROM loaded. Press Ctrl+O to open ROM browser.";
                         ImVec2 txt_sz = ImGui::CalcTextSize(msg);
                         ImVec2 txt_pos(offset_x + (draw_w - txt_sz.x) * 0.5f, offset_y + (draw_h - txt_sz.y) * 0.5f);
                         draw_list->AddRectFilled(ImVec2(txt_pos.x - 8, txt_pos.y - 4), ImVec2(txt_pos.x + txt_sz.x + 8, txt_pos.y + txt_sz.y + 4), IM_COL32(0, 0, 0, 200), 4.0f);
                         draw_list->AddText(txt_pos, IM_COL32(0, 230, 210, 255), msg);
                     } else if (paused) {
-                        const char* pmsg = "paused";
+                        const char* pmsg = "PAUSED";
                         ImVec2 psz = ImGui::CalcTextSize(pmsg);
                         ImVec2 ppos(offset_x + draw_w - psz.x - 12.0f, offset_y + 8.0f);
                         draw_list->AddRectFilled(ImVec2(ppos.x - 5, ppos.y - 2), ImVec2(ppos.x + psz.x + 5, ppos.y + psz.y + 2), IM_COL32(200, 120, 20, 220), 3.0f);
@@ -555,50 +557,50 @@ inline void render_imgui_overlay_ui(
             ImGui::SetNextWindowPos(ImVec2(right_x, top_y), ImGuiCond_Always);
             ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
 
-            if (ImGui::Begin("chip-8 controls##overlay", &state.show_control_panel, flags)) {
+            if (ImGui::Begin("CHIP-8 Controls##overlay", &state.show_control_panel, flags)) {
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 4.0f));
-                ImGui::TextDisabled("status & speed");
+                ImGui::TextDisabled("Status & Speed");
                 if (paused) {
                     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.15f, 0.60f, 0.30f, 0.9f));
                     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.20f, 0.75f, 0.38f, 1.0f));
-                    if (ImGui::Button("  resume execution  ", ImVec2(-1, 24))) {
+                    if (ImGui::Button("  Resume Execution  ", ImVec2(-1, 24))) {
                         paused = false;
-                        state.set_status("resumed");
+                        state.set_status("Resumed");
                     }
                     ImGui::PopStyleColor(2);
 
-                    if (ImGui::Button("step 1 frame (.)", ImVec2(-1, 20))) {
+                    if (ImGui::Button("Step 1 Frame (.)", ImVec2(-1, 20))) {
                         step_one_frame = true;
-                        state.set_status("stepped 1 frame");
+                        state.set_status("Stepped 1 frame");
                     }
                 } else {
                     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.65f, 0.45f, 0.10f, 0.9f));
                     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.80f, 0.55f, 0.15f, 1.0f));
-                    if (ImGui::Button("pause execution", ImVec2(-1, 24))) {
+                    if (ImGui::Button("Pause Execution", ImVec2(-1, 24))) {
                         paused = true;
-                        state.set_status("paused");
+                        state.set_status("Paused");
                     }
                     ImGui::PopStyleColor(2);
                 }
 
                 ImGui::SetNextItemWidth(-1);
-                ImGui::SliderInt("##speed", &cycles_per_frame, 1, 100, "speed: %d cyc/f (60hz)");
+                ImGui::SliderInt("##speed", &cycles_per_frame, 1, 100, "Speed: %d cyc/f (60 Hz)");
 
                 ImGui::Separator();
 
                 
-                ImGui::TextDisabled("savestate slots (1 - 5):");
+                ImGui::TextDisabled("Savestate Slots (1 - 5):");
                 float slot_w = (ImGui::GetContentRegionAvail().x - 4 * 6.0f) / 5.0f;
                 for (int s = 1; s <= 5; s++) {
                     if (s > 1) ImGui::SameLine(0.0f, 6.0f);
                     char slot_lbl[16];
-                    std::snprintf(slot_lbl, sizeof(slot_lbl), current_slot == s ? "[slot %d]" : "slot %d", s);
+                    std::snprintf(slot_lbl, sizeof(slot_lbl), current_slot == s ? "[Slot %d]" : "Slot %d", s);
                     if (current_slot == s) {
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.20f, 0.50f, 0.80f, 1.0f));
                     }
                     if (ImGui::Button(slot_lbl, ImVec2(slot_w, 22))) {
                         current_slot = s;
-                        state.set_status("selected slot " + std::to_string(current_slot));
+                        state.set_status("Selected Slot " + std::to_string(current_slot));
                     }
                     if (current_slot == s) {
                         ImGui::PopStyleColor();
@@ -608,25 +610,25 @@ inline void render_imgui_overlay_ui(
                 std::string slot_filename = get_savestate_path(rom_filename, current_slot);
                 float half_w = (ImGui::GetContentRegionAvail().x - 6.0f) * 0.5f;
 
-                if (ImGui::Button(" save state ", ImVec2(half_w, 24))) {
+                if (ImGui::Button(" Save State ", ImVec2(half_w, 24))) {
                     if (chip8.save_state(slot_filename)) {
-                        state.set_status("state saved to " + slot_filename);
+                        state.set_status("State saved to " + slot_filename);
                     } else {
-                        state.set_status("error saving state", true);
+                        state.set_status("Error saving state", true);
                     }
                 }
                 ImGui::SameLine(0.0f, 6.0f);
-                if (ImGui::Button(" load state ", ImVec2(half_w, 24))) {
+                if (ImGui::Button(" Load State ", ImVec2(half_w, 24))) {
                     if (chip8.load_state(slot_filename)) {
-                        state.set_status("state loaded from " + slot_filename);
+                        state.set_status("State loaded from " + slot_filename);
                     } else {
-                        state.set_status("slot " + std::to_string(current_slot) + " not found", true);
+                        state.set_status("Slot " + std::to_string(current_slot) + " not found", true);
                     }
                 }
 
                 ImGui::Separator();
-                ImGui::TextDisabled("color theme:");
-                const char* current_theme_name = state.use_custom_colors ? "custom color palette" : PALETTES[current_palette_idx].name.c_str();
+                ImGui::TextDisabled("Color Theme:");
+                const char* current_theme_name = state.use_custom_colors ? "Custom Color Palette" : PALETTES[current_palette_idx].name.c_str();
                 ImGui::SetNextItemWidth(-1);
                 if (ImGui::BeginCombo("##preset", current_theme_name)) {
                     for (size_t i = 0; i < PALETTES.size(); i++) {
@@ -641,7 +643,7 @@ inline void render_imgui_overlay_ui(
                             state.custom_fg[0] = active_palette.fg.r / 255.0f;
                             state.custom_fg[1] = active_palette.fg.g / 255.0f;
                             state.custom_fg[2] = active_palette.fg.b / 255.0f;
-                            state.set_status("applied theme: " + active_palette.name);
+                            state.set_status("Applied theme: " + active_palette.name);
                         }
                         if (is_selected) ImGui::SetItemDefaultFocus();
                     }
@@ -651,7 +653,7 @@ inline void render_imgui_overlay_ui(
                 
                 float color_w = (ImGui::GetContentRegionAvail().x - 6.0f) * 0.5f;
                 ImGui::SetNextItemWidth(color_w - 28.0f);
-                if (ImGui::ColorEdit3("bg##custom", state.custom_bg, ImGuiColorEditFlags_NoInputs)) {
+                if (ImGui::ColorEdit3("BG##custom", state.custom_bg, ImGuiColorEditFlags_NoInputs)) {
                     state.use_custom_colors = true;
                     active_palette.bg = {
                         (uint8_t)(state.custom_bg[0] * 255),
@@ -661,7 +663,7 @@ inline void render_imgui_overlay_ui(
                 }
                 ImGui::SameLine(0.0f, 6.0f);
                 ImGui::SetNextItemWidth(color_w - 28.0f);
-                if (ImGui::ColorEdit3("fg##custom", state.custom_fg, ImGuiColorEditFlags_NoInputs)) {
+                if (ImGui::ColorEdit3("FG##custom", state.custom_fg, ImGuiColorEditFlags_NoInputs)) {
                     state.use_custom_colors = true;
                     active_palette.fg = {
                         (uint8_t)(state.custom_fg[0] * 255),
@@ -680,15 +682,15 @@ inline void render_imgui_overlay_ui(
             ImGui::SetNextWindowPos(ImVec2(sound_x, bottom_y), ImGuiCond_Always);
             ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
 
-            if (ImGui::Begin("sound editor##overlay", &state.show_audio_panel, flags)) {
+            if (ImGui::Begin("Sound Synthesizer##overlay", &state.show_audio_panel, flags)) {
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 4.0f));
                 
-                ImGui::Checkbox("master audio", &audio_config.sound_enabled);
+                ImGui::Checkbox("Master Audio", &audio_config.sound_enabled);
                 ImGui::SameLine();
                 if (audio_config.sound_enabled) {
-                    ImGui::TextColored(ImVec4(0.2f, 0.9f, 0.4f, 1.0f), "[active]");
+                    ImGui::TextColored(ImVec4(0.2f, 0.9f, 0.4f, 1.0f), "[Active]");
                 } else {
-                    ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "[muted]");
+                    ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "[Muted]");
                 }
 
                 
@@ -698,7 +700,7 @@ inline void render_imgui_overlay_ui(
                         bool is_sel = (audio_config.waveform_type == i);
                         if (ImGui::Selectable(WAVEFORM_NAMES[i], is_sel)) {
                             audio_config.waveform_type = i;
-                            state.set_status(std::string("waveform: ") + WAVEFORM_NAMES[i]);
+                            state.set_status(std::string("Waveform: ") + WAVEFORM_NAMES[i]);
                         }
                         if (is_sel) ImGui::SetItemDefaultFocus();
                     }
@@ -720,28 +722,28 @@ inline void render_imgui_overlay_ui(
                     }
                 };
 
-                draw_wave_btn("sine", WAVEFORM_SINE, 0);
-                draw_wave_btn("square", WAVEFORM_SQUARE, 1);
-                draw_wave_btn("saw", WAVEFORM_SAWTOOTH, 2);
-                draw_wave_btn("tri", WAVEFORM_TRIANGLE, 3);
-                draw_wave_btn("noise", WAVEFORM_NOISE, 4);
+                draw_wave_btn("Sine", WAVEFORM_SINE, 0);
+                draw_wave_btn("Square", WAVEFORM_SQUARE, 1);
+                draw_wave_btn("Saw", WAVEFORM_SAWTOOTH, 2);
+                draw_wave_btn("Tri", WAVEFORM_TRIANGLE, 3);
+                draw_wave_btn("Noise", WAVEFORM_NOISE, 4);
 
                 
                 float preview_points[100];
                 generate_waveform_preview(audio_config, preview_points, 100);
                 char overlay_plot_text[64];
-                std::snprintf(overlay_plot_text, sizeof(overlay_plot_text), "%s (%.0f hz)", WAVEFORM_NAMES[audio_config.waveform_type], audio_config.waveform_freq);
+                std::snprintf(overlay_plot_text, sizeof(overlay_plot_text), "%s (%.0f Hz)", WAVEFORM_NAMES[audio_config.waveform_type], audio_config.waveform_freq);
                 ImGui::PlotLines("##oscilloscope", preview_points, 100, 0, overlay_plot_text, -1.0f, 1.0f, ImVec2(-1, 48));
 
                 ImGui::SetNextItemWidth(-1);
-                ImGui::SliderFloat("##freq", &audio_config.waveform_freq, 60.0f, 2000.0f, "freq: %.0f hz");
+                ImGui::SliderFloat("##freq", &audio_config.waveform_freq, 60.0f, 2000.0f, "Freq: %.0f Hz");
                 
                 ImGui::SetNextItemWidth(-1);
-                ImGui::SliderFloat("##vol", &audio_config.volume, 0.0f, 1.0f, "vol: %.0f%%");
+                ImGui::SliderFloat("##vol", &audio_config.volume, 0.0f, 1.0f, "Vol: %.0f%%");
 
                 
                 ImGui::PushStyleColor(ImGuiCol_Button, audio_config.test_tone_active ? ImVec4(0.85f, 0.20f, 0.20f, 1.0f) : ImVec4(0.18f, 0.45f, 0.70f, 1.0f));
-                ImGui::Button("  hold mouse to test audio tone  ", ImVec2(-1, 24));
+                ImGui::Button("  Hold mouse to test audio tone  ", ImVec2(-1, 24));
                 audio_config.test_tone_active = ImGui::IsItemActive();
                 ImGui::PopStyleColor();
                 ImGui::PopStyleVar();
@@ -755,21 +757,21 @@ inline void render_imgui_overlay_ui(
             ImGui::SetNextWindowPos(ImVec2(right_x, top_y + right_h1 + gap), ImGuiCond_Always);
             ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
 
-            if (ImGui::Begin("cpu registers & timers##overlay", &state.show_inspector, flags)) {
+            if (ImGui::Begin("CPU Registers & Timers##overlay", &state.show_inspector, flags)) {
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 3.0f));
                 
-                ImGui::Text("pc: 0x%03x  |  i: 0x%03x  |  sp: %d", chip8.get_pc(), chip8.get_index(), chip8.get_sp());
-                ImGui::Text("opcode: 0x%04x", chip8.get_opcode());
+                ImGui::Text("PC: 0x%03X  |  I: 0x%03X  |  SP: %d", chip8.get_pc(), chip8.get_index(), chip8.get_sp());
+                ImGui::Text("Opcode: 0x%04X", chip8.get_opcode());
 
                 
                 float delay_pct = chip8.get_delay_timer() / 255.0f;
                 char delay_str[32];
-                std::snprintf(delay_str, sizeof(delay_str), "delay: %d", chip8.get_delay_timer());
+                std::snprintf(delay_str, sizeof(delay_str), "Delay: %d", chip8.get_delay_timer());
                 ImGui::ProgressBar(delay_pct, ImVec2(-1, 12), delay_str);
 
                 float sound_pct = chip8.get_sound_timer() / 255.0f;
                 char sound_str[32];
-                std::snprintf(sound_str, sizeof(sound_str), "sound: %d %s", chip8.get_sound_timer(), (chip8.get_sound_timer() > 0 ? "[beep]" : ""));
+                std::snprintf(sound_str, sizeof(sound_str), "Sound: %d %s", chip8.get_sound_timer(), (chip8.get_sound_timer() > 0 ? "[BEEP]" : ""));
                 if (chip8.get_sound_timer() > 0) {
                     ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1.0f, 0.4f, 0.2f, 1.0f));
                 }
@@ -779,29 +781,29 @@ inline void render_imgui_overlay_ui(
                 }
 
                 ImGui::Separator();
-                ImGui::TextDisabled("registers v0 - vf:");
+                ImGui::TextDisabled("Registers V0 - VF:");
                 if (ImGui::BeginTable("reg_table", 4, ImGuiTableFlags_BordersInnerV)) {
                     for (int i = 0; i < 16; i++) {
                         if (i % 4 == 0) ImGui::TableNextRow();
                         ImGui::TableSetColumnIndex(i % 4);
                         uint8_t val = chip8.get_v(i);
                         if (i == 0xF && val > 0) {
-                            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "v%x:%02x", i, val);
+                            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "V%X:%02X", i, val);
                         } else {
-                            ImGui::Text("v%x:%02x", i, val);
+                            ImGui::Text("V%X:%02X", i, val);
                         }
                     }
                     ImGui::EndTable();
                 }
 
                 ImGui::Separator();
-                ImGui::TextDisabled("rpl user flags r0 - rf:");
+                ImGui::TextDisabled("RPL User Flags R0 - RF:");
                 if (ImGui::BeginTable("rpl_table", 4, ImGuiTableFlags_BordersInnerV)) {
                     for (int i = 0; i < 16; i++) {
                         if (i % 4 == 0) ImGui::TableNextRow();
                         ImGui::TableSetColumnIndex(i % 4);
                         uint8_t val = chip8.get_rpl_flag(i);
-                        ImGui::Text("r%x:%02x", i, val);
+                        ImGui::Text("R%X:%02X", i, val);
                     }
                     ImGui::EndTable();
                 }
@@ -816,7 +818,7 @@ inline void render_imgui_overlay_ui(
             ImGui::SetNextWindowPos(ImVec2(left_x, bottom_y), ImGuiCond_Always);
             ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
 
-            if (ImGui::Begin("keypad##overlay", &state.show_keypad, flags)) {
+            if (ImGui::Begin("Virtual Keypad##overlay", &state.show_keypad, flags)) {
                 static const int keypad_layout[4][4] = {
                     {0x1, 0x2, 0x3, 0xC},
                     {0x4, 0x5, 0x6, 0xD},
@@ -825,10 +827,10 @@ inline void render_imgui_overlay_ui(
                 };
 
                 static const char* key_labels[16] = {
-                    "0\n(x)", "1\n(1)", "2\n(2)", "3\n(3)",
-                    "4\n(q)", "5\n(w)", "6\n(e)", "7\n(a)",
-                    "8\n(s)", "9\n(d)", "a\n(z)", "b\n(c)",
-                    "c\n(4)", "d\n(r)", "e\n(f)", "f\n(v)"
+                    "0\n(X)", "1\n(1)", "2\n(2)", "3\n(3)",
+                    "4\n(Q)", "5\n(W)", "6\n(E)", "7\n(A)",
+                    "8\n(S)", "9\n(D)", "A\n(Z)", "B\n(C)",
+                    "C\n(4)", "D\n(R)", "E\n(F)", "F\n(V)"
                 };
 
                 float avail_w = ImGui::GetContentRegionAvail().x;
@@ -889,16 +891,16 @@ inline void render_imgui_overlay_ui(
         ImGui::SetNextWindowPos(ImVec2(hx, hy), ImGuiCond_Always);
 
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
-        if (ImGui::Begin("keyboard controls & shortcuts##modal", &state.show_shortcuts, flags)) {
-            ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "chip-8 & super-chip emulator guide");
+        if (ImGui::Begin("Keyboard Controls & Shortcuts##modal", &state.show_shortcuts, flags)) {
+            ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "CHIP-8 & Super-CHIP Emulator Guide");
             ImGui::Separator();
 
             if (ImGui::BeginTabBar("helptabs")) {
-                if (ImGui::BeginTabItem("keyboard shortcuts")) {
-                    ImGui::TextDisabled("emulation hotkeys:");
+                if (ImGui::BeginTabItem("Keyboard Shortcuts")) {
+                    ImGui::TextDisabled("Emulation Hotkeys:");
                     if (ImGui::BeginTable("helptable1", 2, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg)) {
-                        ImGui::TableSetupColumn("shortcut key", ImGuiTableColumnFlags_WidthFixed, 180);
-                        ImGui::TableSetupColumn("action", ImGuiTableColumnFlags_WidthStretch);
+                        ImGui::TableSetupColumn("Shortcut Key", ImGuiTableColumnFlags_WidthFixed, 180);
+                        ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthStretch);
                         ImGui::TableHeadersRow();
 
                         auto add_row = [](const char* key, const char* desc) {
@@ -909,29 +911,29 @@ inline void render_imgui_overlay_ui(
                             ImGui::Text("%s", desc);
                         };
 
-                        add_row("space / p", "pause or resume emulation");
-                        add_row(". / n", "step exactly 1 frame (60hz) when paused");
-                        add_row("+ / up / ]", "increase emulation speed (+60 hz / +1 cycle)");
-                        add_row("- / down / [", "decrease emulation speed (-60 hz / -1 cycle)");
-                        add_row("pageup / pagedn", "fast speed jump (+/- 300 hz)");
-                        add_row("0 / backspace", "reset speed to default 600 hz (10 cycles/frame)");
-                        add_row("tab / t", "cycle next color theme palette");
-                        add_row("shift + tab", "cycle previous color theme palette");
-                        add_row("f5 / ctrl + s", "quick save state to selected slot (1-5)");
-                        add_row("f6 / ctrl + l", "quick load state from selected slot");
-                        add_row("f7", "switch savestate slot (1 to 5)");
-                        add_row("ctrl + r", "reset virtual machine & reload rom");
-                        add_row("ctrl + u", "toggle full ui overlay on / off");
-                        add_row("esc", "close active dialog or exit emulator");
+                        add_row("Space / P", "Pause or resume emulation");
+                        add_row(". / N", "Step exactly 1 frame (60 Hz) when paused");
+                        add_row("+ / Up / ]", "Increase emulation speed (+60 Hz / +1 cycle)");
+                        add_row("- / Down / [", "Decrease emulation speed (-60 Hz / -1 cycle)");
+                        add_row("PageUp / PageDn", "Fast speed jump (+/- 300 Hz)");
+                        add_row("0 / Backspace", "Reset speed to default 600 Hz (10 cycles/frame)");
+                        add_row("Tab / T", "Cycle next color theme palette");
+                        add_row("Shift + Tab", "Cycle previous color theme palette");
+                        add_row("F5 / Ctrl + S", "Quick save state to selected slot (1-5)");
+                        add_row("F6 / Ctrl + L", "Quick load state from selected slot");
+                        add_row("F7", "Switch savestate slot (1 to 5)");
+                        add_row("Ctrl + R", "Reset virtual machine & reload ROM");
+                        add_row("Ctrl + U", "Toggle full UI overlay on / off");
+                        add_row("Esc", "Close active dialog or exit emulator");
                         ImGui::EndTable();
                     }
 
                     ImGui::Spacing();
                     ImGui::Separator();
-                    ImGui::TextDisabled("debugger & tools hotkeys:");
+                    ImGui::TextDisabled("Debugger & Tools Hotkeys:");
                     if (ImGui::BeginTable("helptable2", 2, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg)) {
-                        ImGui::TableSetupColumn("shortcut key", ImGuiTableColumnFlags_WidthFixed, 180);
-                        ImGui::TableSetupColumn("action", ImGuiTableColumnFlags_WidthStretch);
+                        ImGui::TableSetupColumn("Shortcut Key", ImGuiTableColumnFlags_WidthFixed, 180);
+                        ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthStretch);
                         ImGui::TableHeadersRow();
 
                         auto add_row = [](const char* key, const char* desc) {
@@ -942,73 +944,73 @@ inline void render_imgui_overlay_ui(
                             ImGui::Text("%s", desc);
                         };
 
-                        add_row("f12 / ctrl + d", "open / close debugger & disassembler");
-                        add_row("f10", "step single cpu instruction (cycle)");
-                        add_row("shift + f10", "step over subroutine (call / 2nnn)");
-                        add_row("f11", "step single frame");
-                        add_row("f9", "toggle breakpoint at current program counter");
-                        add_row("ctrl + e", "open / close chip-8 code editor & assembler");
-                        add_row("ctrl + k", "open / close custom keypad mapping");
-                        add_row("ctrl + o", "open rom file browser");
-                        add_row("f2", "toggle chip-8 controls panel");
-                        add_row("f3", "toggle cpu registers & timers inspector");
-                        add_row("f4", "toggle virtual keypad panel");
-                        add_row("f8", "toggle sound synthesizer panel");
-                        add_row("h / f1", "toggle this help & controls window");
+                        add_row("F12 / Ctrl + D", "Open / close debugger & disassembler");
+                        add_row("F10", "Step single CPU instruction (cycle)");
+                        add_row("Shift + F10", "Step over subroutine (CALL / 2nnn)");
+                        add_row("F11", "Step single frame");
+                        add_row("F9", "Toggle breakpoint at current program counter");
+                        add_row("Ctrl + E", "Open / close CHIP-8 code editor & assembler");
+                        add_row("Ctrl + K", "Open / close custom keypad mapping");
+                        add_row("Ctrl + O", "Open ROM file browser");
+                        add_row("F2", "Toggle CHIP-8 controls panel");
+                        add_row("F3", "Toggle CPU registers & timers inspector");
+                        add_row("F4", "Toggle virtual keypad panel");
+                        add_row("F8", "Toggle sound synthesizer panel");
+                        add_row("H / F1", "Toggle this help & controls window");
                         ImGui::EndTable();
                     }
                     ImGui::EndTabItem();
                 }
 
-                if (ImGui::BeginTabItem("hex keypad layout")) {
-                    ImGui::TextDisabled("chip-8 hex keypad (16 keys) vs pc keyboard mapping:");
+                if (ImGui::BeginTabItem("Hex Keypad Layout")) {
+                    ImGui::TextDisabled("CHIP-8 Hex Keypad (16 keys) vs PC Keyboard Mapping:");
                     ImGui::Spacing();
 
-                    ImGui::Text("standard cosmac vip keypad:");
+                    ImGui::Text("Standard COSMAC VIP Keypad:");
                     ImGui::TextColored(ImVec4(1.0f, 0.85f, 0.2f, 1.0f),
                         "    +---+---+---+---+\n"
-                        "    | 1 | 2 | 3 | c |\n"
+                        "    | 1 | 2 | 3 | C |\n"
                         "    +---+---+---+---+\n"
-                        "    | 4 | 5 | 6 | d |\n"
+                        "    | 4 | 5 | 6 | D |\n"
                         "    +---+---+---+---+\n"
-                        "    | 7 | 8 | 9 | e |\n"
+                        "    | 7 | 8 | 9 | E |\n"
                         "    +---+---+---+---+\n"
-                        "    | a | 0 | b | f |\n"
+                        "    | A | 0 | B | F |\n"
                         "    +---+---+---+---+"
                     );
 
                     ImGui::Spacing();
-                    ImGui::Text("default pc keyboard mapping (qwerty):");
+                    ImGui::Text("Default PC Keyboard Mapping (QWERTY):");
                     ImGui::TextColored(ImVec4(0.2f, 0.9f, 0.5f, 1.0f),
                         "    +---+---+---+---+\n"
                         "    | 1 | 2 | 3 | 4 |\n"
                         "    +---+---+---+---+\n"
-                        "    | q | w | e | r |\n"
+                        "    | Q | W | E | R |\n"
                         "    +---+---+---+---+\n"
-                        "    | a | s | d | f |\n"
+                        "    | A | S | D | F |\n"
                         "    +---+---+---+---+\n"
-                        "    | z | x | c | v |\n"
+                        "    | Z | X | C | V |\n"
                         "    +---+---+---+---+"
                     );
 
                     ImGui::Spacing();
-                    ImGui::TextDisabled("tip: customize any key mapping in tools -> custom keyboard mapping (ctrl+k).");
+                    ImGui::TextDisabled("Tip: Customize any key mapping in Tools -> Custom Keyboard Mapping (Ctrl+K).");
                     ImGui::EndTabItem();
                 }
 
-                if (ImGui::BeginTabItem("super-chip guide")) {
-                    ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "super-chip 1.1 extensions (schip)");
+                if (ImGui::BeginTabItem("Super-CHIP Guide")) {
+                    ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.95f, 1.0f), "Super-CHIP 1.1 Extensions (SCHIP)");
                     ImGui::Separator();
-                    ImGui::BulletText("high (00ff): switches display to 128x64 high resolution.");
-                    ImGui::BulletText("low  (00fe): reverts display to 64x32 standard resolution.");
-                    ImGui::BulletText("drw vx, vy, 0 (dxy0): draws a large 16x16 sprite (32 bytes).");
-                    ImGui::BulletText("scd n (00cn): hardware scrolls the display down by n lines.");
-                    ImGui::BulletText("scr   (00fb): hardware scrolls the display right by 4 pixels.");
-                    ImGui::BulletText("scl   (00fc): hardware scrolls the display left by 4 pixels.");
-                    ImGui::BulletText("exit  (00fd): halts the program execution gracefully.");
-                    ImGui::BulletText("ld hf, vx (fx30): sets index i to 10-byte high-res font digit.");
-                    ImGui::BulletText("ld r, vx  (fx75): saves v0..vx to hp-48 rpl user flags.");
-                    ImGui::BulletText("ld vx, r  (fx85): restores v0..vx from hp-48 rpl user flags.");
+                    ImGui::BulletText("HIGH (00FF): Switches display to 128x64 high resolution.");
+                    ImGui::BulletText("LOW  (00FE): Reverts display to 64x32 standard resolution.");
+                    ImGui::BulletText("DRW Vx, Vy, 0 (DXY0): Draws a large 16x16 sprite (32 bytes).");
+                    ImGui::BulletText("SCD N (00CN): Hardware scrolls the display down by N lines.");
+                    ImGui::BulletText("SCR   (00FB): Hardware scrolls the display right by 4 pixels.");
+                    ImGui::BulletText("SCL   (00FC): Hardware scrolls the display left by 4 pixels.");
+                    ImGui::BulletText("EXIT  (00FD): Halts the program execution gracefully.");
+                    ImGui::BulletText("LD HF, Vx (Fx30): Sets index I to 10-byte high-res font digit.");
+                    ImGui::BulletText("LD R, Vx  (Fx75): Saves V0..Vx to HP-48 RPL user flags.");
+                    ImGui::BulletText("LD Vx, R  (Fx85): Restores V0..Vx from HP-48 RPL user flags.");
                     ImGui::EndTabItem();
                 }
 
@@ -1017,7 +1019,7 @@ inline void render_imgui_overlay_ui(
 
             ImGui::Spacing();
             ImGui::Separator();
-            if (ImGui::Button("close help (esc)", ImVec2(140, 30))) {
+            if (ImGui::Button("Close Help (Esc)", ImVec2(140, 30))) {
                 state.show_shortcuts = false;
             }
         }
@@ -1025,4 +1027,4 @@ inline void render_imgui_overlay_ui(
     }
 }
 
-#endif 
+#endif

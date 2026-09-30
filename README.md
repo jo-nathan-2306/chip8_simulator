@@ -1,69 +1,69 @@
-# chip-8 / super-chip emulator
+# CHIP-8 / Super-CHIP Emulator
 
-a feature-complete chip-8 and super-chip (schip) emulator built in c++ with sdl2 and dear imgui.
+A feature-complete CHIP-8 and Super-CHIP (SCHIP) emulator built in C++ with SDL2 and Dear ImGui.
 
-## features
+## Features
 
-- **full chip-8 + super-chip (schip) opcode set** — all 35 standard + all schip extensions
-- **128×64 high-resolution mode** (00ff/00fe), 16×16 sprite rendering (dxy0), 8×10 font sprites (fx30)
-- **hardware scrolling**: down (00cn), right (00fb), left (00fc)
-- **hp-48 rpl persistent user flags** (fx75 / fx85)
-- **dear imgui ui overlay** — full menu bar, control panel, dialogs
-- **live debugger** with disassembler, breakpoints, trace log, memory hex viewer, and register delta highlighting
-- **built-in chip-8 assembler** with 4 template programs and syntax error reporting
-- **rom file browser** with schip auto-detection, search/filter, and recent roms list
-- **multi-waveform audio synthesizer** — sine, square (configurable duty cycle), sawtooth, triangle, noise
-- **8 authentic retro color palettes** plus custom rgb color picker
-- **savestate support** — 5 slots, versioned binary format (v1/v2)
-- **custom keyboard mapping** — 3 layout presets (qwerty, numpad, wasd) + per-key rebind
-- **5 configurable compatibility quirks** — shift, vf reset, load/store, jump, legacy scroll
+- **Full CHIP-8 + Super-CHIP (SCHIP) Opcode Set** — all 35 standard + all SCHIP extensions
+- **128×64 High-Resolution Mode** (`00FF`/`00FE`), 16×16 sprite rendering (`DXY0`), 8×10 font sprites (`FX30`)
+- **Hardware Scrolling**: Down (`00CN`), Right (`00FB`), Left (`00FC`)
+- **HP-48 RPL Persistent User Flags** (`FX75` / `FX85`)
+- **Dear ImGui UI Overlay** — full menu bar, control panel, dialogs
+- **Live Debugger** with disassembler, breakpoints, trace log, memory hex viewer, and register delta highlighting
+- **Built-in CHIP-8 Assembler** with 4 template programs and syntax error reporting
+- **ROM File Browser** with SCHIP auto-detection, search/filter, and recent ROMs list
+- **Multi-waveform Audio Synthesizer** — Sine, Square (configurable duty cycle), Sawtooth, Triangle, Noise
+- **8 Authentic Retro Color Palettes** plus custom RGB color picker
+- **Savestate Support** — 5 slots, versioned binary format (v1/v2)
+- **Custom Keyboard Mapping** — 3 layout presets (QWERTY, Numpad, WASD) + per-key rebind
+- **5 Configurable Compatibility Quirks** — Shift, VF reset, Load/Store, Jump, Legacy scroll
 
-## architecture
+## Architecture
 
-chip-8 is a virtual machine from the 1970s designed to make programming video games easier on early microcomputers.
+CHIP-8 is a virtual machine from the 1970s designed to make programming video games easier on early microcomputers.
 
-### system specifications
+### System Specifications
 
-- **memory**: up to 64 kb (65536 bytes)
-  - `0x000-0x04f`: standard 5-byte font sprites (digits 0–f)
-  - `0x050-0x0ef`: super-chip 10-byte high-res font sprites (digits 0–f)
-  - `0x200-0xffff`: program/rom space
-- **registers**:
-  - 16 8-bit general-purpose registers (v0–vf)
-  - vf doubles as a flag register for arithmetic operations
-  - 16-bit index register (i)
-  - 16-bit program counter (pc)
-  - 8-bit stack pointer (sp) with 16-level call stack
-  - 16 hp-48 rpl persistent user flags (r0–rf)
-- **display**: 64×32 (chip-8) or 128×64 (super-chip), monochrome
-- **timers**:
-  - delay timer (counts down at 60 hz)
-  - sound timer (beeps when > 0, counts down at 60 hz)
-- **keypad**: 16-key hexadecimal input (customizable mapping)
+- **Memory**: up to 64 KB (65536 bytes)
+  - `0x000-0x04F`: Standard 5-byte font sprites (digits 0–F)
+  - `0x050-0x0EF`: Super-CHIP 10-byte high-res font sprites (digits 0–F)
+  - `0x200-0xFFFF`: Program / ROM space
+- **Registers**:
+  - 16 8-bit general-purpose registers (V0–VF)
+  - VF doubles as a flag register for arithmetic operations
+  - 16-bit index register (I)
+  - 16-bit program counter (PC)
+  - 8-bit stack pointer (SP) with 16-level call stack
+  - 16 HP-48 RPL persistent user flags (R0–RF)
+- **Display**: 64×32 (CHIP-8) or 128×64 (Super-CHIP), monochrome
+- **Timers**:
+  - Delay timer (counts down at 60 Hz)
+  - Sound timer (beeps when > 0, counts down at 60 Hz)
+- **Keypad**: 16-key hexadecimal input (customizable mapping)
 
-## dependencies
+## Dependencies
 
-- sdl2
-- dear imgui (bundled in `external/imgui`)
+- SDL2
+- Dear ImGui (bundled in `external/imgui`)
 
-### installation
+### Installation
 
-**ubuntu/debian:**
+**Ubuntu / Debian:**
 ```bash
 sudo apt-get install libsdl2-dev
 ```
 
-**arch linux:**
+**Arch Linux:**
 ```bash
-sudo pacman -s sdl2
+sudo pacman -S sdl2
 ```
 
-**macos:**
+**macOS:**
 ```bash
 brew install sdl2
 ```
 
-## building
+## Building
 
 ```bash
 git clone <repo-url>
@@ -71,115 +71,115 @@ cd chip8-emulator
 make
 ```
 
-## usage
+## Usage
 
 ```bash
-./chip8                   # opens rom browser automatically
-./chip8 <path-to-rom>     # load a specific rom on startup
+./chip8                   # Opens ROM browser automatically
+./chip8 <path-to-rom>     # Load a specific ROM on startup
 ```
 
-**example:**
+**Examples:**
 ```bash
 ./chip8 roms/pong.ch8
 ./chip8 roms/eaty.ch8
 ```
 
-## keyboard mapping
+## Keyboard Mapping
 
-default qwerty layout (rebindable via ctrl+k or tools → keyboard mapping):
+Default QWERTY layout (rebindable via Ctrl+K or Tools → Keyboard Mapping):
 
 ```
-chip-8 keypad:          qwerty keyboard:
+CHIP-8 Keypad:          QWERTY Keyboard:
 ┌─┬─┬─┬─┐               ┌─┬─┬─┬─┐
-│1│2│3│c│               │1│2│3│4│
+│1│2│3│C│               │1│2│3│4│
 ├─┼─┼─┼─┤               ├─┼─┼─┼─┤
-│4│5│6│d│               │q│w│e│r│
+│4│5│6│D│               │Q│W│E│R│
 ├─┼─┼─┼─┤      =        ├─┼─┼─┼─┤
-│7│8│9│e│               │a│s│d│f│
+│7│8│9│E│               │A│S│D│F│
 ├─┼─┼─┼─┤               ├─┼─┼─┼─┤
-│a│0│b│f│               │z│x│c│v│
+│A│0│B│F│               │Z│X│C│V│
 └─┴─┴─┴─┘               └─┴─┴─┴─┘
 ```
 
-### keyboard shortcuts
+### Keyboard Shortcuts
 
-| feature | key shortcut | menu / gui |
+| Feature | Key Shortcut | Menu / GUI |
 |:---|:---|:---|
-| **open rom browser** | `ctrl+o` | file → open rom |
-| **debugger / disassembler** | `f12` / `ctrl+d` | debug → disassembler |
-| **code editor / assembler** | `ctrl+e` | tools → code editor |
-| **keyboard mapping** | `ctrl+k` | tools → keyboard mapping |
-| **reset vm / reload rom** | `ctrl+r` | file → reset vm |
-| **pause / resume** | `space` / `p` | emulation → pause |
-| **step 1 frame** | `.` / `n` / `f11` | debug → step frame |
-| **step single instruction** | `f10` | debug → step cycle |
-| **step over subroutine** | `shift+f10` | debug → step over |
-| **toggle breakpoint at pc** | `f9` | debug → toggle breakpoint |
-| **speed up** | `+` / `=` / `up` / `]` | control panel slider |
-| **slow down** | `-` / `down` / `[` | control panel slider |
-| **fast speed step** | `pageup` / `pagedown` | — |
-| **reset speed (600 hz)** | `0` / `backspace` | control panel → 600hz |
-| **control panel** | `f2` | tools → control panel |
-| **cycle color palette** | `tab` / `t` | color themes menu |
-| **prev color palette** | `shift+tab` | — |
-| **save state** | `f5` / `ctrl+s` | file → quick save |
-| **load state** | `f6` / `ctrl+l` | file → quick load |
-| **cycle save slot (1–5)** | `f7` | control panel |
-| **help / shortcuts** | `h` / `f1` | help menu |
-| **quit** | `esc` | file → quit |
+| **Open ROM Browser** | `Ctrl+O` | File → Open ROM |
+| **Debugger / Disassembler** | `F12` / `Ctrl+D` | Debug → Disassembler |
+| **Code Editor / Assembler** | `Ctrl+E` | Tools → Code Editor |
+| **Keyboard Mapping** | `Ctrl+K` | Tools → Keyboard Mapping |
+| **Reset VM / Reload ROM** | `Ctrl+R` | File → Reset VM |
+| **Pause / Resume** | `Space` / `P` | Emulation → Pause |
+| **Step 1 Frame** | `.` / `N` / `F11` | Debug → Step Frame |
+| **Step Single Instruction** | `F10` | Debug → Step Cycle |
+| **Step Over Subroutine** | `Shift+F10` | Debug → Step Over |
+| **Toggle Breakpoint at PC** | `F9` | Debug → Toggle Breakpoint |
+| **Speed Up** | `+` / `=` / `Up` / `]` | Control Panel Slider |
+| **Slow Down** | `-` / `Down` / `[` | Control Panel Slider |
+| **Fast Speed Step** | `PageUp` / `PageDown` | — |
+| **Reset Speed (600 Hz)** | `0` / `Backspace` | Control Panel → 600 Hz |
+| **Control Panel** | `F2` | Tools → Control Panel |
+| **Cycle Color Palette** | `Tab` / `T` | Color Themes Menu |
+| **Prev Color Palette** | `Shift+Tab` | — |
+| **Save State** | `F5` / `Ctrl+S` | File → Quick Save |
+| **Load State** | `F6` / `Ctrl+L` | File → Quick Load |
+| **Cycle Save Slot (1–5)** | `F7` | Control Panel |
+| **Help / Shortcuts** | `H` / `F1` | Help Menu |
+| **Quit** | `Esc` | File → Quit |
 
-## compatibility quirks
+## Compatibility Quirks
 
-configure chip-8 vs super-chip compatibility via the debugger → **schip & quirks** tab:
+Configure CHIP-8 vs Super-CHIP compatibility via Debugger → **SCHIP & Quirks** tab:
 
-| quirk | default | description |
+| Quirk | Default | Description |
 |:---|:---|:---|
-| **bit shift** | `true` (schip) | `8xy6`/`8xye` shifts vx in place; when off, copies vy→vx first (vip) |
-| **vf reset** | `false` (schip) | when on, `8xy0/1/2/3` reset vf=0 after the operation (cosmac vip) |
-| **load/store** | `true` (schip) | `fx55`/`fx65` leaves i unchanged; when off, i += x+1 (vip) |
-| **jump** | `false` (chip-8) | when on, `bxnn` jumps to xnn+vx instead of nnn+v0 (schip) |
-| **legacy scroll** | `false` | when on, lores scroll moves half-pixels (original hp-48 hardware) |
+| **Bit Shift** | `true` (SCHIP) | `8XY6`/`8XYE` shifts VX in place; when off, copies VY→VX first (VIP) |
+| **VF Reset** | `false` (SCHIP) | When on, `8XY0/1/2/3` reset VF=0 after the operation (COSMAC VIP) |
+| **Load/Store** | `true` (SCHIP) | `FX55`/`FX65` leaves I unchanged; when off, I += X+1 (VIP) |
+| **Jump** | `false` (CHIP-8) | When on, `BXNN` jumps to XNN+VX instead of NNN+V0 (SCHIP) |
+| **Legacy Scroll** | `false` | When on, lores scroll moves half-pixels (original HP-48 hardware) |
 
-> test rom compatibility using the included `roms/4-flags.ch8` and `roms/5-quirks.ch8`.
+> Test ROM compatibility using the included `roms/4-flags.ch8` and `roms/5-quirks.ch8`.
 
-## implementation details
+## Implementation Details
 
-### instruction set
+### Instruction Set
 
-full chip-8 + super-chip instruction set:
-- **arithmetic**: add, sub, subn, and, or, xor, shr, shl — with configurable quirks
-- **graphics**: xor sprite drawing with collision detection; 8×n standard + 16×16 schip mode
-- **flow control**: jp, call/ret, se/sne conditional skips
-- **memory**: ld/st registers, bcd conversion, rpl flags store/restore
-- **timers**: delay (fx07/fx15) and sound (fx18) timer operations
-- **input**: fx0a (blocking wait for key), ex9e/exa1 (skip on key state)
-- **super-chip**: high/low resolution switch, hardware scrolling, large sprites, 10-byte fonts
+Full CHIP-8 + Super-CHIP instruction set:
+- **Arithmetic**: ADD, SUB, SUBN, AND, OR, XOR, SHR, SHL — with configurable quirks
+- **Graphics**: XOR sprite drawing with collision detection; 8×N standard + 16×16 SCHIP mode
+- **Flow Control**: JP, CALL/RET, SE/SNE conditional skips
+- **Memory**: LD/ST registers, BCD conversion, RPL flags store/restore
+- **Timers**: Delay (FX07/FX15) and Sound (FX18) timer operations
+- **Input**: FX0A (blocking wait for key), EX9E/EXA1 (skip on key state)
+- **Super-CHIP**: High/low resolution switch, hardware scrolling, large sprites, 10-byte fonts
 
-### display
+### Display
 
-graphics rendered via sdl2 + imgui:
-- chip-8: 64×32 pixels, each scaled 10× → 640×320 viewport
-- schip: 128×64 pixels, each scaled 5× → 640×320 viewport (same physical size)
-- xor-mode sprite drawing with vf collision flag
-- 60 fps rendering with frame-timing cap
+Graphics rendered via SDL2 + ImGui:
+- CHIP-8: 64×32 pixels, each scaled 10× → 640×320 viewport
+- SCHIP: 128×64 pixels, each scaled 5× → 640×320 viewport (same physical size)
+- XOR-mode sprite drawing with VF collision flag
+- 60 FPS rendering with frame-timing cap
 
-### audio
+### Audio
 
-multi-waveform sdl2 audio synthesizer (44100 hz, 16-bit mono):
-- **sine** — smooth warm tone
-- **square / pulse** — classic 8-bit beep (configurable duty cycle 10%–90%)
-- **sawtooth** — arcade buzz
-- **triangle** — retro bass
-- **noise** — 16-bit galois lfsr static
+Multi-waveform SDL2 audio synthesizer (44100 Hz, 16-bit mono):
+- **Sine** — smooth warm tone
+- **Square / Pulse** — classic 8-bit beep (configurable duty cycle 10%–90%)
+- **Sawtooth** — arcade buzz
+- **Triangle** — retro bass
+- **Noise** — 16-bit Galois LFSR static
 
-### savestate format
+### Savestate Format
 
-binary format (`c8st` magic, version 2):
-- saves: pc, opcode, i, sp, timers, draw_flag, extended_mode, halted, v0–vf, stack, keypad, rpl flags, display buffer (128×64), full 64 kb ram
+Binary format (`C8ST` magic, version 2):
+- Saves: PC, Opcode, I, SP, Timers, Draw_Flag, Extended_Mode, Halted, V0–VF, Stack, Keypad, RPL Flags, Display Buffer (128×64), full 64 KB RAM
 
-## resources
+## Resources
 
-- [chip-8 technical reference](http://devernay.free.fr/hacks/chip8/c8tech10.htm)
-- [super-chip specification](https://github.com/trapexit/chip-8_documentation)
-- [chip-8 test suite roms](https://github.com/timendus/chip8-test-suite)
-- [chip-8 roms archive](https://github.com/kripod/chip8-roms)
+- [CHIP-8 Technical Reference](http://devernay.free.fr/hacks/chip8/c8tech10.htm)
+- [Super-CHIP Specification](https://github.com/trapexit/chip-8_documentation)
+- [CHIP-8 Test Suite ROMs](https://github.com/timendus/chip8-test-suite)
+- [CHIP-8 ROMs Archive](https://github.com/kripod/chip8-roms)

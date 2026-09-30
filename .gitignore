@@ -3,7 +3,9 @@
 *.obj
 *.exe
 a.out
+t
 chip8
 *.sav
 imgui.ini
-!roms/*.ch8
+chip8_simulator/
+.vscode/

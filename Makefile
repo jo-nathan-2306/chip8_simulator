@@ -1,5 +1,5 @@
 cxx = g++
-cxxflags = -std=c++17 -wall -wextra -o2 $(shell pkg-config --cflags sdl2) -iexternal/imgui -iexternal/imgui/backends -mmd -mp
+cxxflags = -std=c++17 -Wall -Wextra -O2 $(shell pkg-config --cflags sdl2) -Iexternal/imgui -Iexternal/imgui/backends -MMD -MP
 target = chip8
 
 sources = src/main.cpp src/chip8.cpp \
