@@ -5,5 +5,5 @@
 a.out
 chip8
 *.sav
-*.ch8
 imgui.ini
+!roms/*.ch8
